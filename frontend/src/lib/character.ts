@@ -423,7 +423,7 @@ export class SimulationCharacter {
     // Calculate midpoint and radius for trap circle
     const midX = (this.x + partner.x) / 2;
     const midY = (this.y + partner.y) / 2;
-    const radius = 550; // Fixed radius for interaction circle
+    const radius = 200; // Fixed radius for interaction circle
 
     // Set target positions (characters will walk there):
     // Use clamp to keep positions within world boundaries

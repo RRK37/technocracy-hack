@@ -177,7 +177,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 variant={showInteractionRadius ? "default" : "outline"}
                 size="sm"
                 onClick={onToggleInteractionRadius}
-                className="h-6 px-2 text-xs"
+                className={`h-6 px-2 text-xs ${showInteractionRadius ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-transparent'}`}
               >
                 {showInteractionRadius ? 'On' : 'Off'}
               </Button>
@@ -190,7 +190,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 variant={showTrapCircles ? "default" : "outline"}
                 size="sm"
                 onClick={onToggleTrapCircles}
-                className="h-6 px-2 text-xs"
+                className={`h-6 px-2 text-xs ${showTrapCircles ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-transparent'}`}
               >
                 {showTrapCircles ? 'On' : 'Off'}
               </Button>
