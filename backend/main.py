@@ -17,25 +17,32 @@ class UserContext(BaseModel):
 # ---- Routes ----
 @app.post("/api/context")
 def set_context(context: Context):
+    """Returns the list of agent ids"""
     if context.mode not in ['pitch']:
         raise HTTPException(status_code=400, detail="Invalid mode")
 
     app.state.context = context
-    return {"message": "Context received successfully!"}
-
-@app.get('/api/context')
-def get_context():
-    return getattr(app.state, 'context', None)
+    return [i for i in range(1, 21)]
 
 # ---- Routes ----
 @app.post("/api/userContext")
 def set_user_context(context: UserContext):
+    """Returns the id of the user agent"""
     app.state.user_context = context
-    return {"message": "Context received successfully!"}
+    return 56
 
-@app.get('/api/userContext')
-def get_user_context():
-    return getattr(app.state, 'user_context', None)
+@app.post("/api/get_transcript")
+def get_pitch():
+    """Returns the transcript of the pitch"""
+    return [{
+        "user": "Today I want to pitch my idea for a new company about xyz",
+    }, {
+        "agent_003": "I think it's a good idea",
+    }, {
+        "user": "Thank you",
+    }, {
+        "agent_003": "You're welcome",
+    }]
 
 @app.get("/", include_in_schema=False)
 def root():
