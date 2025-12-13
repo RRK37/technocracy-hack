@@ -74,10 +74,10 @@ def get_script_plan():
     app.state.script_plan = gpt("Generate a plan for a pitch to vcs, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown')
     return app.state.script_plan
 
-@app.post("/api/transcript")
-def get_transcript():
-    """Returns the transcript of the pitch"""
-    pitch = gpt("Generate a transcript for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just the pitch')
+@app.post("/api/script")
+def get_script():
+    """Returns the script of the pitch"""
+    pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just the script')
     return pitch
 
 @app.post("/api/agent_conversation")
