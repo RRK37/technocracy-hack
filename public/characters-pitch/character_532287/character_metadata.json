@@ -1,0 +1,24 @@
+{
+  "character_id": "532287",
+  "name": "An N.",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4D03AQHwLllt0jK21g/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1709161508083?e=1767225600&v=beta&t=XnTxJMb6JdlYQk6VI5Ro3zxp2PDLDx9pbReZFSD11Tg",
+  "extracted_features": {
+    "gender": "male",
+    "skin_color": "taupe",
+    "hair_color": "dark_brown",
+    "hair_length": "long",
+    "shirt_color": "gray",
+    "confidence": {
+      "skin": "medium",
+      "hair_color": "low",
+      "hair_length": "low",
+      "shirt": "medium"
+    }
+  },
+  "generated_files": [
+    "characters-pitch/character_532287/sprite_idle.png",
+    "characters-pitch/character_532287/sprite_walk.png",
+    "characters-pitch/character_532287/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T17:39:12.217917"
+}

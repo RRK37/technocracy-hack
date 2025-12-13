@@ -1,0 +1,25 @@
+{
+  "character_id": "227243",
+  "name": "Henry Allen",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQG2Eh083L-x8g/profile-displayphoto-shrink_200_200/B4EZZ833mnHcAc-/0/1745851743051?e=1767225600&v=beta&t=nr3CD_ZrGmnyVSgR9krjFyJ-Pihxk-TlUd5VTvijBJo",
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "dark_brown",
+    "hair_length": "short",
+    "shirt_color": "black",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-pitch/character_227243/sprite_idle.png",
+    "characters-pitch/character_227243/sprite_walk.png",
+    "characters-pitch/character_227243/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T17:38:57.777140"
+}

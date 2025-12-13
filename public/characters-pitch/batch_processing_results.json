@@ -1,0 +1,56 @@
+{
+  "processed": 8,
+  "success": 8,
+  "failed": 0,
+  "skipped": 0,
+  "characters": {
+    "character_227243": {
+      "name": "Henry Allen",
+      "status": "success",
+      "directory": "characters-pitch/character_227243",
+      "sprites": 3
+    },
+    "character_135817": {
+      "name": "Rom\u00e9o Walter",
+      "status": "success",
+      "directory": "characters-pitch/character_135817",
+      "sprites": 3
+    },
+    "character_824612": {
+      "name": "Alexandra Tsylnitska",
+      "status": "success",
+      "directory": "characters-pitch/character_824612",
+      "sprites": 3
+    },
+    "character_728351": {
+      "name": "Zoe (Ziwen) Qin",
+      "status": "success",
+      "directory": "characters-pitch/character_728351",
+      "sprites": 3
+    },
+    "character_863407": {
+      "name": "Ties Boukema",
+      "status": "success",
+      "directory": "characters-pitch/character_863407",
+      "sprites": 3
+    },
+    "character_532287": {
+      "name": "An N.",
+      "status": "success",
+      "directory": "characters-pitch/character_532287",
+      "sprites": 3
+    },
+    "character_194266": {
+      "name": "Haakon Overli",
+      "status": "success",
+      "directory": "characters-pitch/character_194266",
+      "sprites": 3
+    },
+    "character_185003": {
+      "name": "Skye Fletcher",
+      "status": "success",
+      "directory": "characters-pitch/character_185003",
+      "sprites": 3
+    }
+  }
+}

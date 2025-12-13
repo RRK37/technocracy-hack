@@ -1,0 +1,22 @@
+{
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "light_brown",
+    "hair_length": "medium",
+    "shirt_color": "red",
+    "gender": "female",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "selected_style": {
+    "gender": "female",
+    "hair_style": "parted_side_bangs2"
+  },
+  "generated": "2025-12-13T17:39:17.715032",
+  "method": "OpenAI GPT-4 Vision API"
+}
