@@ -4,3 +4,5 @@ flask>=3.0.0
 flask-cors>=4.0.0
 pydantic>=2.0.0
 python-dotenv==1.2.1
+fastapi>=0.124.4
+uvicorn>=0.38.0
