@@ -11,7 +11,7 @@ import { useCharacterData } from '@/src/hooks/useCharacterData';
 import { useCamera } from '@/src/hooks/useCamera';
 import { useGameLoop } from '@/src/hooks/useGameLoop';
 import { SimulationCharacter } from '@/src/lib/character';
-import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG } from '@/src/lib/world';
+import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG } from '@/src/lib/world';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 export function CharacterWorld() {
@@ -104,6 +104,46 @@ export function CharacterWorld() {
       interactionTrapCircleIds.current.clear();
     }
   }, [worldMode, simulationCharacters]);
+
+  // Arrange characters in audience formation when switching to SCRATCH mode
+  useEffect(() => {
+    if (worldMode === WorldMode.SCRATCH && modeConfig.audienceFormation && simulationCharacters.length > 0) {
+      // First reset all characters
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+
+      // Find Jordan as presenter (or first character if Jordan not found)
+      const presenter = simulationCharacters.find((char) =>
+        char.data.name.toLowerCase() === 'jordan'
+      ) || simulationCharacters[0];
+
+      // Calculate formation positions centered in world
+      const centerX = WORLD_CONFIG.WIDTH / 2;
+      const centerY = WORLD_CONFIG.HEIGHT / 2;
+
+      // Set presenter position (front center)
+      presenter.setAudiencePosition(centerX, centerY - 150, true);
+
+      // Arrange audience in rows behind presenter
+      const audience = simulationCharacters.filter((c) => c !== presenter);
+      const cols = Math.min(8, Math.ceil(Math.sqrt(audience.length * 1.5))); // Wider than tall
+      const spacingX = 80;
+      const spacingY = 70;
+      const startY = centerY + 50; // Start below presenter
+
+      audience.forEach((char, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        // Center each row
+        const rowCharCount = Math.min(cols, audience.length - row * cols);
+        const rowStartX = centerX - ((rowCharCount - 1) * spacingX) / 2;
+        const x = rowStartX + col * spacingX;
+        const y = startY + row * spacingY;
+        char.setAudiencePosition(x, y, false);
+      });
+    }
+  }, [worldMode, modeConfig.audienceFormation, simulationCharacters]);
 
   // Game loop - update all characters and check for interactions
   useGameLoop(

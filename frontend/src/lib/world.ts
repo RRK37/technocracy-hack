@@ -57,6 +57,8 @@ export enum CharacterState {
   TALKING = 'TALKING',
   SITTING = 'SITTING',
   INTERACTING = 'INTERACTING', // Two characters interacting with each other
+  AUDIENCE = 'AUDIENCE',       // Sitting in audience formation
+  PRESENTING = 'PRESENTING',   // Standing at front as presenter
 }
 
 // World modes
@@ -72,6 +74,7 @@ export interface ModeFeatures {
   interactions: boolean;        // Characters can interact with each other
   interactionRadius: boolean;   // Show interaction radius around characters
   sitting: boolean;             // Characters can sit when clicked
+  audienceFormation: boolean;   // Arrange characters in audience rows
 }
 
 // Configuration for each world mode
@@ -81,20 +84,22 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactions: true,
     interactionRadius: true,
     sitting: true,
+    audienceFormation: false,
   },
   [WorldMode.OBSERVE]: {
     trapCircles: false,
     interactions: false,
     interactionRadius: false,
     sitting: false,
+    audienceFormation: false,
   },
   [WorldMode.SCRATCH]: {
-    // Sandbox mode - starts with OBSERVE defaults
-    // Modify these as you experiment with new features
+    // Sandbox mode - audience formation enabled
     trapCircles: false,
     interactions: false,
     interactionRadius: false,
     sitting: false,
+    audienceFormation: true,
   },
 };
 
