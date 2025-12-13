@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -177,6 +177,15 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               >
                 <Eye className="size-3 mr-1" />
                 Observe
+              </Button>
+              <Button
+                variant={worldMode === WorldMode.PRESENTING ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.PRESENTING)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.PRESENTING ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-transparent'}`}
+              >
+                <Presentation className="size-3 mr-1" />
+                Presenting
               </Button>
               <Button
                 variant={worldMode === WorldMode.SCRATCH ? "default" : "outline"}

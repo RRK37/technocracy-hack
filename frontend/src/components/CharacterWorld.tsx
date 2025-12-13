@@ -105,9 +105,9 @@ export function CharacterWorld() {
     }
   }, [worldMode, simulationCharacters]);
 
-  // Arrange characters in audience formation when switching to SCRATCH mode
+  // Arrange characters in audience formation when switching to PRESENTING mode
   useEffect(() => {
-    if (worldMode === WorldMode.SCRATCH && modeConfig.audienceFormation && simulationCharacters.length > 0) {
+    if (worldMode === WorldMode.PRESENTING && modeConfig.audienceFormation && simulationCharacters.length > 0) {
       // First reset all characters
       simulationCharacters.forEach((char) => char.resetToWandering());
       setTrapCircles([]);
@@ -122,15 +122,15 @@ export function CharacterWorld() {
       const centerX = WORLD_CONFIG.WIDTH / 2;
       const centerY = WORLD_CONFIG.HEIGHT / 2;
 
-      // Set presenter position (front center)
-      presenter.setAudiencePosition(centerX, centerY - 150, true);
+      // Set presenter position (front center - at bottom facing away from user)
+      presenter.setAudiencePosition(centerX, centerY + 200, true);
 
-      // Arrange audience in rows behind presenter
+      // Arrange audience in rows above presenter (facing down toward user)
       const audience = simulationCharacters.filter((c) => c !== presenter);
       const cols = Math.min(8, Math.ceil(Math.sqrt(audience.length * 1.5))); // Wider than tall
       const spacingX = 80;
       const spacingY = 70;
-      const startY = centerY + 50; // Start below presenter
+      const startY = centerY - 100; // Start above presenter
 
       audience.forEach((char, i) => {
         const row = Math.floor(i / cols);
@@ -139,11 +139,22 @@ export function CharacterWorld() {
         const rowCharCount = Math.min(cols, audience.length - row * cols);
         const rowStartX = centerX - ((rowCharCount - 1) * spacingX) / 2;
         const x = rowStartX + col * spacingX;
-        const y = startY + row * spacingY;
+        const y = startY - row * spacingY; // Rows go upward (negative Y)
         char.setAudiencePosition(x, y, false);
       });
     }
   }, [worldMode, modeConfig.audienceFormation, simulationCharacters]);
+
+  // Reset characters when switching to SCRATCH mode (sandbox for experiments)
+  useEffect(() => {
+    if (worldMode === WorldMode.SCRATCH && simulationCharacters.length > 0) {
+      // Reset all characters to wandering
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      // Clear all trap circles
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+    }
+  }, [worldMode, simulationCharacters]);
 
   // Game loop - update all characters and check for interactions
   useGameLoop(

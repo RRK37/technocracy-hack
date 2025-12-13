@@ -754,7 +754,7 @@ export class SimulationCharacter {
           const idleFrameW = this.idleImage.width / 2;
           const idleFrameH = this.idleImage.height / 4;
           const idleCol = 0;
-          const idleRow = 2; // Row 3 (0-indexed = 2) - facing down
+          const idleRow = 0; // Row 1 (0-indexed = 0) - facing up (back to user)
 
           ctx.drawImage(
             this.idleImage,
@@ -776,11 +776,11 @@ export class SimulationCharacter {
             currentH
           );
         } else if (this.sitImageLoaded && this.sitImage) {
-          // Sit sprite: row 1 (facing up), col 1
+          // Sit sprite: row 3 col 1 (facing down, faces visible to user)
           const sitFrameW = this.sitImage.width / 3;
           const sitFrameH = this.sitImage.height / 4;
           const sitCol = 1;
-          const sitRow = 0; // Row 1 (0-indexed = 0) - facing up
+          const sitRow = 2; // Row 3 (0-indexed = 2) - facing down
 
           ctx.drawImage(
             this.sitImage,

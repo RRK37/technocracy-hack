@@ -65,6 +65,7 @@ export enum CharacterState {
 export enum WorldMode {
   INTERACTIVE = 'interactive',  // Full interaction dynamics: trap circles, character interactions
   OBSERVE = 'observe',          // Just wandering characters, no interactions
+  PRESENTING = 'presenting',    // Audience formation with presenter at front
   SCRATCH = 'scratch',          // Sandbox mode for experimenting with new features
 }
 
@@ -93,13 +94,22 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     sitting: false,
     audienceFormation: false,
   },
-  [WorldMode.SCRATCH]: {
-    // Sandbox mode - audience formation enabled
+  [WorldMode.PRESENTING]: {
+    // Audience formation with Jordan as presenter
     trapCircles: false,
     interactions: false,
     interactionRadius: false,
     sitting: false,
     audienceFormation: true,
+  },
+  [WorldMode.SCRATCH]: {
+    // Sandbox mode - starts with OBSERVE defaults
+    // Modify these as you experiment with new features
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: false,
   },
 };
 
