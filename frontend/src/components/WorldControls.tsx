@@ -271,7 +271,9 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               {scriptPlan && (
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-red-400 uppercase tracking-wide">Pitch Plan</h4>
-                  <p className="text-xs text-gray-300 leading-relaxed">{scriptPlan}</p>
+                  <div className="max-h-32 overflow-y-auto">
+                    <p className="text-xs text-gray-300 leading-relaxed">{scriptPlan}</p>
+                  </div>
                 </div>
               )}
               {/* Script chunks */}
