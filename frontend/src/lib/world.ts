@@ -69,7 +69,15 @@ export enum WorldMode {
   OBSERVE = 'observe',          // Just wandering characters, no interactions
   PRESENTING = 'presenting',    // Audience formation with presenter at front
   DISCUSS = 'discuss',          // Waiting room: audience in top-left, presenter on right
+  PITCH = 'pitch',              // Combined Present + Discuss with stage transitions
   SCRATCH = 'scratch',          // Sandbox mode for experimenting with new features
+}
+
+// Pitch mode stages
+export enum PitchStage {
+  IDLE = 'idle',               // Characters wander randomly
+  PRESENTING = 'presenting',   // Audience formation with Jordan presenting
+  DISCUSSING = 'discussing',   // Trap circle with auto-discussions
 }
 
 // Mode feature configuration
@@ -112,6 +120,14 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: false,
     sitting: false,
     audienceFormation: false,
+  },
+  [WorldMode.PITCH]: {
+    // Pitch mode: dynamically controlled by stage
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: false, // Controlled per-stage
   },
   [WorldMode.SCRATCH]: {
     // Sandbox mode - starts with OBSERVE defaults

@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CharacterList } from '@/src/components/CharacterList';
 import type { Character } from '@/src/types/character';
-import { WorldMode, ModeFeatures } from '@/src/lib/world';
+import { WorldMode, ModeFeatures, PitchStage } from '@/src/lib/world';
 import {
   Conversation,
   ConversationContent,
@@ -68,9 +68,11 @@ interface WorldControlsProps {
   worldMode: WorldMode;
   onSetWorldMode: (mode: WorldMode) => void;
   modeConfig: ModeFeatures;
+  pitchStage?: PitchStage;
+  onAdvancePitchStage?: () => void;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -209,8 +211,37 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 <FlaskConical className="size-3 mr-1" />
                 Scratch
               </Button>
+              <Button
+                variant={worldMode === WorldMode.PITCH ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.PITCH)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.PITCH ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-transparent'}`}
+              >
+                <Rocket className="size-3 mr-1" />
+                Pitch
+              </Button>
             </div>
           </div>
+          {/* Pitch mode controls */}
+          {worldMode === WorldMode.PITCH && onAdvancePitchStage && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                Stage: {pitchStage === PitchStage.IDLE ? 'Ready' : pitchStage === PitchStage.PRESENTING ? 'Presenting' : 'Discussing'}
+              </span>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onAdvancePitchStage}
+                className="h-6 px-3 text-xs bg-red-600 hover:bg-red-700 text-white"
+              >
+                {pitchStage === PitchStage.IDLE ? (
+                  <><Play className="size-3 mr-1" /> Start Pitching</>
+                ) : (
+                  <><SkipForward className="size-3 mr-1" /> Next</>
+                )}
+              </Button>
+            </div>
+          )}
           {trapCircleCount > 0 && onClearTrapCircles && (
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1 text-muted-foreground">
