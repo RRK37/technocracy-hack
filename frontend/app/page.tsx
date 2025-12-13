@@ -3,25 +3,35 @@
 import { useState } from 'react';
 import { CharacterWorld } from "@/src/components/CharacterWorld";
 import { LandingPage } from "@/src/components/LandingPage";
+import { CompanyInputPage } from "@/src/components/CompanyInputPage";
+import { UserContextPage } from "@/src/components/UserContextPage";
 import { WorldMode } from "@/src/lib/world";
+
+// Context data stored after API calls
+interface PitchContext {
+  company: string;
+  agentIds: number[];
+  userId: number;
+}
 
 // Step-based state machine for app navigation
 type AppStep =
   | { step: 'landing' }
-  | { step: 'context'; mode: WorldMode }  // Future: company input for Pitch mode
-  | { step: 'world'; mode: WorldMode; context?: Record<string, unknown> };
+  | { step: 'companyContext' }  // Pitch: company input
+  | { step: 'userContext'; company: string; agentIds: number[] }  // Pitch: user input
+  | { step: 'world'; mode: WorldMode; pitchContext?: PitchContext };
 
 export default function Home() {
   const [appState, setAppState] = useState<AppStep>({ step: 'landing' });
 
   const handleSelectMode = (mode: WorldMode) => {
-    // For now, go directly to world. Later, Pitch can go through context step
-    // if (mode === WorldMode.PITCH) {
-    //   setAppState({ step: 'context', mode });
-    // } else {
-    //   setAppState({ step: 'world', mode });
-    // }
-    setAppState({ step: 'world', mode });
+    if (mode === WorldMode.PITCH) {
+      // Pitch mode goes through context pages
+      setAppState({ step: 'companyContext' });
+    } else {
+      // Other modes go directly to world
+      setAppState({ step: 'world', mode });
+    }
   };
 
   const handleBack = () => {
@@ -33,13 +43,43 @@ export default function Home() {
     case 'landing':
       return <LandingPage onSelectMode={handleSelectMode} />;
 
-    case 'context':
-      // Future: Context input page for Pitch mode
-      // return <ContextPage mode={appState.mode} onSubmit={(ctx) => setAppState({ step: 'world', mode: appState.mode, context: ctx })} />
-      return null;
+    case 'companyContext':
+      return (
+        <CompanyInputPage
+          onSubmit={(company, agentIds) => {
+            setAppState({ step: 'userContext', company, agentIds });
+          }}
+          onBack={handleBack}
+        />
+      );
+
+    case 'userContext':
+      return (
+        <UserContextPage
+          company={appState.company}
+          onSubmit={(userId) => {
+            setAppState({
+              step: 'world',
+              mode: WorldMode.PITCH,
+              pitchContext: {
+                company: appState.company,
+                agentIds: appState.agentIds,
+                userId,
+              },
+            });
+          }}
+          onBack={() => setAppState({ step: 'companyContext' })}
+        />
+      );
 
     case 'world':
-      return <CharacterWorld initialMode={appState.mode} onBack={handleBack} />;
+      return (
+        <CharacterWorld
+          initialMode={appState.mode}
+          onBack={handleBack}
+          pitchContext={appState.pitchContext}
+        />
+      );
 
     default:
       return <LandingPage onSelectMode={handleSelectMode} />;

@@ -14,12 +14,20 @@ import { SimulationCharacter } from '@/src/lib/character';
 import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
+// Context data from Pitch mode setup
+export interface PitchContext {
+  company: string;
+  agentIds: number[];
+  userId: number;
+}
+
 interface CharacterWorldProps {
   initialMode?: WorldMode;
   onBack?: () => void;
+  pitchContext?: PitchContext;
 }
 
-export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack }: CharacterWorldProps) {
+export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pitchContext }: CharacterWorldProps) {
   // Load character data
   const { characters: characterData, isLoading, isError } = useCharacterData();
 
