@@ -82,6 +82,10 @@ export class SimulationCharacter {
   isPresenter: boolean = false;
   walkingToAudiencePosition: boolean = false;
 
+  // Walk-to-area properties (for walking then wandering)
+  walkTargetX: number = 0;
+  walkTargetY: number = 0;
+
   // Aura determines interaction radius (0-1, randomly assigned)
   aura: number;
 
@@ -251,6 +255,38 @@ export class SimulationCharacter {
 
     // Don't move if in audience/presenting (and not walking)
     if (this.state === CharacterState.AUDIENCE || this.state === CharacterState.PRESENTING) {
+      return;
+    }
+
+    // Handle walking to area (then transition to wandering)
+    if (this.state === CharacterState.WALKING_TO_AREA) {
+      const dx = this.walkTargetX - this.x;
+      const dy = this.walkTargetY - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 5) {
+        // Arrived at target - transition to wandering with random velocity
+        this.x = this.walkTargetX;
+        this.y = this.walkTargetY;
+        this.state = CharacterState.WANDERING;
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * CHARACTER_CONFIG.SPEED;
+        this.vy = Math.sin(angle) * CHARACTER_CONFIG.SPEED;
+      } else {
+        // Walk toward target at normal speed
+        const speed = CHARACTER_CONFIG.SPEED * 1.5;
+        this.vx = (dx / distance) * speed;
+        this.vy = (dy / distance) * speed;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Update facing direction based on movement
+        if (Math.abs(this.vx) > Math.abs(this.vy)) {
+          this.row = this.vx > 0 ? Direction.RIGHT : Direction.LEFT;
+        } else {
+          this.row = this.vy > 0 ? Direction.DOWN : Direction.UP;
+        }
+      }
       return;
     }
 
@@ -608,6 +644,15 @@ export class SimulationCharacter {
       this.vx = Math.cos(angle) * CHARACTER_CONFIG.SPEED;
       this.vy = Math.sin(angle) * CHARACTER_CONFIG.SPEED;
     }
+  }
+
+  /**
+   * Set walk target (will walk there then start wandering)
+   */
+  setWalkTarget(x: number, y: number): void {
+    this.walkTargetX = x;
+    this.walkTargetY = y;
+    this.state = CharacterState.WALKING_TO_AREA;
   }
 
   /**

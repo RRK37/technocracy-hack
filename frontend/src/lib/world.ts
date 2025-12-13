@@ -59,6 +59,7 @@ export enum CharacterState {
   INTERACTING = 'INTERACTING', // Two characters interacting with each other
   AUDIENCE = 'AUDIENCE',       // Sitting in audience formation
   PRESENTING = 'PRESENTING',   // Standing at front as presenter
+  WALKING_TO_AREA = 'WALKING_TO_AREA', // Walking to a target then wandering
 }
 
 // World modes

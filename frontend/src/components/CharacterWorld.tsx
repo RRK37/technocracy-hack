@@ -145,14 +145,51 @@ export function CharacterWorld() {
     }
   }, [worldMode, modeConfig.audienceFormation, simulationCharacters]);
 
-  // Reset characters when switching to SCRATCH mode (sandbox for experiments)
+  // SCRATCH mode: Waiting room - audience in top-left, Jordan on right
   useEffect(() => {
     if (worldMode === WorldMode.SCRATCH && simulationCharacters.length > 0) {
-      // Reset all characters to wandering
+      // Reset all characters first
       simulationCharacters.forEach((char) => char.resetToWandering());
-      // Clear all trap circles
       setTrapCircles([]);
       interactionTrapCircleIds.current.clear();
+
+      // Find Jordan as presenter (or first character if Jordan not found)
+      const presenter = simulationCharacters.find((char) =>
+        char.data.name.toLowerCase() === 'jordan'
+      ) || simulationCharacters[0];
+
+      // Calculate dimensions for top-left area (15% of world = ~38% width/height)
+      const areaWidth = WORLD_CONFIG.WIDTH * 0.38;
+      const areaHeight = WORLD_CONFIG.HEIGHT * 0.38;
+      const centerX = areaWidth / 2;
+      const centerY = areaHeight / 2;
+      const radius = Math.min(areaWidth, areaHeight) / 2 - 50; // Circular trap area
+
+      // Create trap circle in top-left corner
+      const trapCircle: TrapCircle = {
+        id: `scratch-trap-${Date.now()}`,
+        x: centerX + 50, // Offset from edge
+        y: centerY + 50,
+        radius: radius,
+      };
+      setTrapCircles([trapCircle]);
+
+      // Position Jordan on the right side, standing and facing left
+      const jordanX = WORLD_CONFIG.WIDTH * 0.8;
+      const jordanY = WORLD_CONFIG.HEIGHT / 2;
+      presenter.setAudiencePosition(jordanX, jordanY, true);
+
+      // Walk audience characters to the trap circle area
+      const audience = simulationCharacters.filter((c) => c !== presenter);
+      audience.forEach((char) => {
+        // Random target position within the trap circle
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * (radius - 30);
+        const targetX = trapCircle.x + Math.cos(angle) * dist;
+        const targetY = trapCircle.y + Math.sin(angle) * dist;
+        // Set walk target (will walk there then start wandering)
+        char.setWalkTarget(targetX, targetY);
+      });
     }
   }, [worldMode, simulationCharacters]);
 
