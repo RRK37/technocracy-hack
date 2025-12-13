@@ -1,0 +1,22 @@
+{
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "black",
+    "hair_length": "long",
+    "shirt_color": "white",
+    "gender": "female",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "selected_style": {
+    "gender": "female",
+    "hair_style": "pigtails_bangs"
+  },
+  "generated": "2025-12-13T17:39:04.383149",
+  "method": "OpenAI GPT-4 Vision API"
+}
