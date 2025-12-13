@@ -556,6 +556,13 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       // Next -> back to PRESENTING stage
       setPitchStage(PitchStage.PRESENTING);
 
+      // Clear discussion bubbles
+      setDiscussionBubbles([]);
+      if (discussionIntervalRef.current) {
+        clearInterval(discussionIntervalRef.current);
+        discussionIntervalRef.current = null;
+      }
+
       simulationCharacters.forEach((char) => char.resetToWandering());
       setTrapCircles([]);
 

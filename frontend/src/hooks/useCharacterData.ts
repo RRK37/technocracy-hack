@@ -29,6 +29,7 @@ async function fetchCharacterData(): Promise<CharactersData> {
       'An N.': '532287',
       'Haakon Overli': '194266',
       'Skye Fletcher': '185003',
+      'Jordan': 'jordan', // Presenter - uses character_jordan folder
     };
 
     // Convert flat format to expected format
