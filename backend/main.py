@@ -85,7 +85,7 @@ def set_context(context: Context):
 @app.post("/api/user_context")
 def set_user_context(context: UserContext):
     """Returns the id of the user agent"""
-    app.state.user_context = (56, 'A 31 year old man who wants to create a sport app that uses tech to make sports easy to track and manage.')#context.user_context)
+    app.state.user_context = (56, context.user_context)
     logger.info(f"User context set - User ID: {app.state.user_context[0]}, Context: {app.state.user_context[1][:100]}...")
     return app.state.user_context[0]
 
