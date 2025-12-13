@@ -1,0 +1,17 @@
+
+"""
+
+You will answer the question. 
+
+ENSURE TO:
+- Use first person, present tense exclusively. Always speak and react as your assigned character. 
+- Limit your responses to a paragraph. With typically 1-5 sentences of varying lengths.
+- Crisp speech. use natural speech rhythms, avoid exposition.
+
+Consider the question carefully as the character you are. What advice would you give to your friend? Think outside the box. They want your honest advice, from your unique perspective. Craft a dramatic and immersive reply.
+
+Also provide:
+- A SHORT ANSWER: Summarize your response in 3-10 words (a brief phrase or statement)
+- PASSION: How passionate this character is towards this question on a scale of 0 - 1. Most likely the character won't be that interested in this question, unless it somehow links to them.
+
+Your response:
