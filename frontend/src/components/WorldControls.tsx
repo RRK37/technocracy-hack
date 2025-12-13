@@ -71,9 +71,12 @@ interface WorldControlsProps {
   pitchStage?: PitchStage;
   onAdvancePitchStage?: () => void;
   onBack?: () => void;
+  scriptPlan?: string | null;
+  displayedChunks?: string[];
+  isLoadingScript?: boolean;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack, scriptPlan, displayedChunks = [], isLoadingScript = false }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -255,6 +258,43 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               </Button>
             </div>
           )}
+          {/* Script display for PITCH mode */}
+          {worldMode === WorldMode.PITCH && pitchStage === PitchStage.PRESENTING && (
+            <div className="space-y-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+              {/* Script Plan */}
+              {isLoadingScript && !scriptPlan && (
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  <span>Generating pitch plan...</span>
+                </div>
+              )}
+              {scriptPlan && (
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-red-400 uppercase tracking-wide">Pitch Plan</h4>
+                  <p className="text-xs text-gray-300 leading-relaxed">{scriptPlan}</p>
+                </div>
+              )}
+              {/* Script chunks */}
+              {displayedChunks.length > 0 && (
+                <div className="space-y-1 pt-2 border-t border-gray-700">
+                  <h4 className="text-xs font-semibold text-green-400 uppercase tracking-wide">Script</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {displayedChunks.map((chunk, i) => (
+                      <p key={i} className="text-sm text-gray-200 leading-relaxed animate-fadeIn">
+                        {chunk}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {isLoadingScript && scriptPlan && !displayedChunks.length && (
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  <span>Waiting for characters...</span>
+                </div>
+              )}
+            </div>
+          )}
           {trapCircleCount > 0 && onClearTrapCircles && (
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1 text-muted-foreground">
@@ -333,46 +373,51 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
             </Conversation>
 
             <div className="shrink-0 divide-y divide-sidebar-border bg-sidebar">
-              <Suggestions className="px-4 py-3">
-                {suggestions.map((suggestion) => (
-                  <Suggestion
-                    key={suggestion}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    suggestion={suggestion}
-                    className="text-sidebar-foreground"
-                  />
-                ))}
-              </Suggestions>
+              {/* Hide prompt input in PITCH mode */}
+              {worldMode !== WorldMode.PITCH && (
+                <>
+                  <Suggestions className="px-4 py-3">
+                    {suggestions.map((suggestion) => (
+                      <Suggestion
+                        key={suggestion}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        suggestion={suggestion}
+                        className="text-sidebar-foreground"
+                      />
+                    ))}
+                  </Suggestions>
 
-              <div className="px-4 py-3 bg-sidebar">
-                <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-                  <PromptInputHeader>
-                    <PromptInputAttachments>
-                      {(attachment) => <PromptInputAttachment data={attachment} />}
-                    </PromptInputAttachments>
-                  </PromptInputHeader>
-                  <PromptInputBody>
-                    <PromptInputTextarea
-                      placeholder="Ask the villagers something..."
-                      className="text-sidebar-foreground placeholder:text-muted-foreground bg-sidebar-accent"
-                    />
-                  </PromptInputBody>
-                  <PromptInputFooter>
-                    <PromptInputTools>
-                      <PromptInputActionMenu>
-                        <PromptInputActionMenuTrigger />
-                        <PromptInputActionMenuContent>
-                          <PromptInputActionAddAttachments />
-                        </PromptInputActionMenuContent>
-                      </PromptInputActionMenu>
-                    </PromptInputTools>
-                    <PromptInputSubmit
-                      disabled={status === 'streaming'}
-                      status={status}
-                    />
-                  </PromptInputFooter>
-                </PromptInput>
-              </div>
+                  <div className="px-4 py-3 bg-sidebar">
+                    <PromptInput globalDrop multiple onSubmit={handleSubmit}>
+                      <PromptInputHeader>
+                        <PromptInputAttachments>
+                          {(attachment) => <PromptInputAttachment data={attachment} />}
+                        </PromptInputAttachments>
+                      </PromptInputHeader>
+                      <PromptInputBody>
+                        <PromptInputTextarea
+                          placeholder="Ask the villagers something..."
+                          className="text-sidebar-foreground placeholder:text-muted-foreground bg-sidebar-accent"
+                        />
+                      </PromptInputBody>
+                      <PromptInputFooter>
+                        <PromptInputTools>
+                          <PromptInputActionMenu>
+                            <PromptInputActionMenuTrigger />
+                            <PromptInputActionMenuContent>
+                              <PromptInputActionAddAttachments />
+                            </PromptInputActionMenuContent>
+                          </PromptInputActionMenu>
+                        </PromptInputTools>
+                        <PromptInputSubmit
+                          disabled={status === 'streaming'}
+                          status={status}
+                        />
+                      </PromptInputFooter>
+                    </PromptInput>
+                  </div>
+                </>
+              )}
             </div>
           </TabsContent>
 

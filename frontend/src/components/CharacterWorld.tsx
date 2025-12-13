@@ -65,6 +65,17 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
   // Pitch mode stage (for PITCH mode)
   const [pitchStage, setPitchStage] = useState<PitchStage>(PitchStage.IDLE);
 
+  // Script display state (for PITCH mode)
+  const [scriptPlan, setScriptPlan] = useState<string | null>(null);
+  const [script, setScript] = useState<string | null>(null);
+  const [displayedChunks, setDisplayedChunks] = useState<string[]>([]);
+  const [currentSpeechChunk, setCurrentSpeechChunk] = useState<string | null>(null);
+  const [isLoadingScript, setIsLoadingScript] = useState(false);
+  const scriptChunksRef = useRef<string[]>([]);
+  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const presenterRef = useRef<SimulationCharacter | null>(null);
+  const positionCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Add a new trap circle
   const addTrapCircle = useCallback((circle: TrapCircle) => {
     setTrapCircles((prev) => [...prev, circle]);
@@ -237,8 +248,109 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       discussionGroup.current = [];
       discussionEndTime.current = 0;
       lastDiscussionTime.current = 0;
+      // Reset script state
+      setScriptPlan(null);
+      setScript(null);
+      setDisplayedChunks([]);
     }
   }, [worldMode]);
+
+  // PITCH mode: Poll for when characters are in position and fetch script
+  useEffect(() => {
+    if (worldMode !== WorldMode.PITCH || pitchStage !== PitchStage.PRESENTING) {
+      // Clear interval when not in PRESENTING
+      if (positionCheckIntervalRef.current) {
+        clearInterval(positionCheckIntervalRef.current);
+        positionCheckIntervalRef.current = null;
+      }
+      return;
+    }
+    if (script) return; // Already have script
+    if (!scriptPlan) return; // Wait for plan first
+
+    // Start polling for position
+    positionCheckIntervalRef.current = setInterval(() => {
+      const allInPosition = simulationCharacters.every(
+        (char) => !char.walkingToAudiencePosition
+      );
+
+      if (allInPosition && simulationCharacters.length > 0 && !isLoadingScript) {
+        // Stop polling
+        if (positionCheckIntervalRef.current) {
+          clearInterval(positionCheckIntervalRef.current);
+          positionCheckIntervalRef.current = null;
+        }
+
+        // Fetch the full script
+        setIsLoadingScript(true);
+        fetch('http://localhost:8000/api/script', { method: 'POST' })
+          .then((res) => res.json())
+          .then((fullScript: string) => {
+            setScript(fullScript);
+            setIsLoadingScript(false);
+
+            // Break into chunks (sentences)
+            const chunks = fullScript.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim());
+            scriptChunksRef.current = chunks;
+
+            // Display chunks one by one with speech bubble
+            let index = 0;
+            if (chunks.length > 0) {
+              setCurrentSpeechChunk(chunks[0]);
+              setDisplayedChunks([chunks[0]]);
+              index = 1;
+            }
+            chunkIntervalRef.current = setInterval(() => {
+              if (index < chunks.length) {
+                setCurrentSpeechChunk(chunks[index]);
+                setDisplayedChunks((prev) => [...prev, chunks[index]]);
+                index++;
+              } else {
+                setCurrentSpeechChunk(null); // Done speaking
+                if (chunkIntervalRef.current) {
+                  clearInterval(chunkIntervalRef.current);
+                }
+              }
+            }, 3000); // 3 seconds per chunk
+          })
+          .catch((err) => {
+            console.error('Failed to fetch script, using dummy:', err);
+            // Dummy fallback for testing
+            const dummyScript = "Good morning everyone, thank you for having me today. I'm excited to share my vision for revolutionizing the industry. The problem we're solving affects millions of people daily. Our solution is elegant and scalable. We've already seen incredible traction with early users. We're seeking investment to accelerate growth. I'd love to answer any questions you have.";
+            setScript(dummyScript);
+            setIsLoadingScript(false);
+
+            const chunks = dummyScript.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim());
+            scriptChunksRef.current = chunks;
+
+            let index = 0;
+            if (chunks.length > 0) {
+              setCurrentSpeechChunk(chunks[0]);
+              setDisplayedChunks([chunks[0]]);
+              index = 1;
+            }
+            chunkIntervalRef.current = setInterval(() => {
+              if (index < chunks.length) {
+                setCurrentSpeechChunk(chunks[index]);
+                setDisplayedChunks((prev) => [...prev, chunks[index]]);
+                index++;
+              } else {
+                setCurrentSpeechChunk(null);
+                if (chunkIntervalRef.current) {
+                  clearInterval(chunkIntervalRef.current);
+                }
+              }
+            }, 3000);
+          });
+      }
+    }, 500); // Check every 500ms
+
+    return () => {
+      if (positionCheckIntervalRef.current) {
+        clearInterval(positionCheckIntervalRef.current);
+      }
+    };
+  }, [worldMode, pitchStage, script, scriptPlan, simulationCharacters.length]);
 
   // Handle pitch stage transitions
   const advancePitchStage = useCallback(() => {
@@ -252,6 +364,29 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       // Start Pitching -> PRESENTING stage
       setPitchStage(PitchStage.PRESENTING);
 
+      // Clear previous script state
+      setScriptPlan(null);
+      setScript(null);
+      setDisplayedChunks([]);
+      if (chunkIntervalRef.current) {
+        clearInterval(chunkIntervalRef.current);
+      }
+
+      // Fetch script plan immediately
+      setIsLoadingScript(true);
+      fetch('http://localhost:8000/api/script_plan', { method: 'POST' })
+        .then((res) => res.json())
+        .then((plan) => {
+          setScriptPlan(plan);
+          setIsLoadingScript(false);
+        })
+        .catch((err) => {
+          console.error('Failed to fetch script plan, using dummy:', err);
+          // Dummy fallback for testing
+          setScriptPlan('1. Introduce yourself and your background. 2. Present the problem you are solving. 3. Explain your unique solution. 4. Show market opportunity and traction. 5. Ask for investment.');
+          setIsLoadingScript(false);
+        });
+
       // Set up audience formation (same as PRESENTING mode)
       simulationCharacters.forEach((char) => char.resetToWandering());
       setTrapCircles([]);
@@ -259,6 +394,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       const presenter = simulationCharacters.find((char) =>
         char.data.name.toLowerCase() === 'jordan'
       ) || simulationCharacters[0];
+      presenterRef.current = presenter; // Save for speech bubble
 
       const centerX = WORLD_CONFIG.WIDTH / 2;
       const centerY = WORLD_CONFIG.HEIGHT / 2;
@@ -560,6 +696,11 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
             showInteractionRadius={modeConfig.interactionRadius && showInteractionRadius}
             showTrapCircles={modeConfig.trapCircles && showTrapCircles}
             modeConfig={modeConfig}
+            speechBubble={currentSpeechChunk && presenterRef.current ? {
+              text: currentSpeechChunk,
+              x: presenterRef.current.x,
+              y: presenterRef.current.y,
+            } : undefined}
           />
         </div>
       </SidebarInset>
@@ -578,6 +719,9 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
         pitchStage={pitchStage}
         onAdvancePitchStage={advancePitchStage}
         onBack={onBack}
+        scriptPlan={scriptPlan}
+        displayedChunks={displayedChunks}
+        isLoadingScript={isLoadingScript}
       />
     </SidebarProvider>
   );
