@@ -38,7 +38,7 @@ def format_char_id(char_id):
 
 def gpt(prompt):
     response = client.responses.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         input=prompt,
     )
     return response.output_text
@@ -50,7 +50,7 @@ with open("../public/all-characters.json", "r") as f:
 def get_character_persona(id: int) -> str:
     """Reads file at ../public/all-characters.json and returns the persona for the given id"""
     return data["characters"][f"character_{format_char_id(id)}"]["persona"]
-app.state.characters_contexts = [(i + 1, get_character_persona(i + 1)) for i in range(20)]
+app.state.characters_contexts = [(i + 1, 'You have this persona and are judging the pitch of a user. ' + get_character_persona(i + 1)) for i in range(20)]
 app.state.user_context = (56, "")
 
 # ---- Routes ----
@@ -66,19 +66,20 @@ def set_user_context(context: UserContext):
     app.state.user_context = (56, 'A 31 year old man who wants to create a sport app that uses tech to make sports easy to track and manage.')#context.user_context)
     return app.state.user_context[0]
 
-app.state.script_plan = ""
-
 @app.post("/api/script_plan")
 def get_script_plan():
-    """Returns the transcript of the pitch"""
+    """Returns the script plan of the pitch"""
     app.state.script_plan = gpt("Generate a plan for a pitch to vcs, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown')
     return app.state.script_plan
 
 @app.post("/api/script")
 def get_script():
     """Returns the script of the pitch"""
-    pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just the script')
-    return pitch
+    app.state.pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just the script')
+
+    for i in app.state.characters_contexts:
+        i[1] += "Here is the users pitch: " + app.state.pitch + "\n"
+    return app.state.pitch
 
 @app.post("/api/agent_conversation")
 def get_agent_conversation():
