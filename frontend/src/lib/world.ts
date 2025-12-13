@@ -63,6 +63,7 @@ export enum CharacterState {
 export enum WorldMode {
   INTERACTIVE = 'interactive',  // Full interaction dynamics: trap circles, character interactions
   OBSERVE = 'observe',          // Just wandering characters, no interactions
+  SCRATCH = 'scratch',          // Sandbox mode for experimenting with new features
 }
 
 // Mode feature configuration
@@ -82,6 +83,14 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     sitting: true,
   },
   [WorldMode.OBSERVE]: {
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+  },
+  [WorldMode.SCRATCH]: {
+    // Sandbox mode - starts with OBSERVE defaults
+    // Modify these as you experiment with new features
     trapCircles: false,
     interactions: false,
     interactionRadius: false,
