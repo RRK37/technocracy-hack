@@ -4,10 +4,18 @@ from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 import random
 import json
+import logging
 from openai import OpenAI
 import dotenv   
 import os
 from fastapi.middleware.cors import CORSMiddleware
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 dotenv.load_dotenv()
 
@@ -57,28 +65,36 @@ app.state.user_context = [56, ""]
 @app.post("/api/context")
 def set_context(context: Context):
     """Returns the list of agent ids"""
-    return [i for i, _ in app.state.characters_contexts]
+    agent_ids = [i for i, _ in app.state.characters_contexts]
+    logger.info(f"Context set - Mode: {context.mode}, Agent IDs: {agent_ids}")
+    return agent_ids
 
 # ---- Routes ----
 @app.post("/api/user_context")
 def set_user_context(context: UserContext):
     """Returns the id of the user agent"""
     app.state.user_context = (56, 'A 31 year old man who wants to create a sport app that uses tech to make sports easy to track and manage.')#context.user_context)
+    logger.info(f"User context set - User ID: {app.state.user_context[0]}, Context: {app.state.user_context[1][:100]}...")
     return app.state.user_context[0]
 
 @app.post("/api/script_plan")
 def get_script_plan():
     """Returns the script plan of the pitch"""
+    logger.info("Generating script plan...")
     app.state.script_plan = gpt("Generate a plan for a pitch to vcs, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown')
+    logger.info(f"Script plan generated - Length: {len(app.state.script_plan)} chars")
     return app.state.script_plan
 
 @app.post("/api/script")
 def get_script():
     """Returns the script of the pitch"""
+    logger.info("Generating pitch script...")
     app.state.pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just the script')
+    logger.info(f"Pitch script generated - Length: {len(app.state.pitch)} chars")
 
     for i in app.state.characters_contexts:
         i[1] += "Here is the users pitch: " + app.state.pitch + "\n"
+    logger.info(f"Pitch distributed to {len(app.state.characters_contexts)} agents")
     return app.state.pitch
 
 @app.post("/api/agent_conversation")
@@ -87,12 +103,15 @@ def get_agent_conversation():
     Agents discuss the pitch with each other.
     Conversation is stored back into app.state.characters_contexts.
     """
+    logger.info("Starting agent conversation...")
 
     NUM_AGENTS = 4
     ROUNDS = 2
 
     # choose agents
     selected_agents = random.sample(app.state.characters_contexts, NUM_AGENTS)
+    selected_agent_ids = [agent_id for agent_id, _ in selected_agents]
+    logger.info(f"Selected {NUM_AGENTS} agents for conversation: {selected_agent_ids}")
 
     conversation = []
 
@@ -116,6 +135,7 @@ def get_agent_conversation():
             )
 
             response = gpt(prompt).strip()
+            logger.info(f"Agent {agent_id} responded: {response[:80]}..." if len(response) > 80 else f"Agent {agent_id} responded: {response}")
 
             entry = {
                 "agent_id": agent_id,
@@ -140,6 +160,7 @@ def get_agent_conversation():
         updated_contexts.append((agent_id, agent_context))
 
     app.state.characters_contexts = updated_contexts
+    logger.info(f"Conversation complete - {len(conversation)} total messages, {ROUNDS} rounds")
 
     return conversation
 
