@@ -1,0 +1,35 @@
+What it is:
+A mobile app that connects people with nearby, verified handymen for small home repairs (leaky taps, broken switches, furniture fixes) within 24 hours.
+
+How it works:
+Users post a job, see a fixed price, and book instantly. Handymen get paid per job, and QuickFix takes a small service fee.
+
+
+
+Background: Former operations manager who noticed how hard it was to find reliable, fast home repair help.
+
+
+
+Hook (Problem)
+Finding a reliable handyman fast is frustrating and unpredictable.
+
+Solution
+QuickFix Home connects users with verified local handymen for small repairs within 24 hours at fixed prices.
+
+Product Demo (Brief)
+Show how a user posts a job and books in under 2 minutes.
+
+Market Opportunity
+Busy homeowners and renters in urban areas.
+
+Business Model
+Service fee from each completed job.
+
+Why Us
+Speed, transparent pricing, and trusted professionals.
+
+Traction / Next Steps
+Pilot launch in one city, onboard 50 handymen.
+
+Close
+Ask for funding or partnerships to scale.
