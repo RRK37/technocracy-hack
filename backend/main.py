@@ -64,13 +64,13 @@ def gpt(prompt):
     return response.output_text
 
 data = None
-with open("../public/all-characters.json", "r") as f:
+with open("../public/all-characters-pitch.json", "r") as f:
     data = json.load(f)
 
 def get_character_persona(id: int) -> str:
-    """Reads file at ../public/all-characters.json and returns the persona for the given id"""
-    return data["characters"][f"character_{format_char_id(id)}"]["persona"]
-app.state.characters_contexts = [[i + 1, 'You have this persona and are judging the pitch of a user. ' + get_character_persona(i + 1)] for i in range(20)]
+    """Reads file at ../public/all-characters-pitch.json and returns the persona for the given id"""
+    return data[f"character_{format_char_id(id)}"]["persona"]
+app.state.characters_contexts = [[i + 1, 'You have this persona and are judging the pitch of a user. ' + get_character_persona(i + 1)] for i in range(8)]
 app.state.user_context = [56, ""]
 
 # ---- Routes ----
@@ -111,7 +111,7 @@ def get_script():
 
 @app.post("/api/agent_conversation")
 def get_agent_conversation():
-    """
+    """f
     Agents discuss the pitch with each other.
     Conversation is stored back into app.state.characters_contexts.
     """
