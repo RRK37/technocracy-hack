@@ -64,13 +64,13 @@ def gpt(prompt):
     return response.output_text
 
 data = None
-with open("../public/all-characters.json", "r") as f:
+with open("../public/all-characters-pitch.json", "r") as f:
     data = json.load(f)
 
 def get_character_persona(id: int) -> str:
-    """Reads file at ../public/all-characters.json and returns the persona for the given id"""
-    return data["characters"][f"character_{format_char_id(id)}"]["persona"]
-app.state.characters_contexts = [[i + 1, 'You have this persona and are judging the pitch of a user. ' + get_character_persona(i + 1)] for i in range(20)]
+    """Reads file at ../public/all-characters-pitch.json and returns the persona for the given id"""
+    return data[f"character_{format_char_id(id)}"]["persona"]
+app.state.characters_contexts = [[i + 1, 'You have this persona and are judging the pitch of a user. ' + get_character_persona(i + 1)] for i in range(8)]
 app.state.user_context = [56, ""]
 
 # ---- Routes ----
@@ -85,7 +85,7 @@ def set_context(context: Context):
 @app.post("/api/user_context")
 def set_user_context(context: UserContext):
     """Returns the id of the user agent"""
-    app.state.user_context = (56, 'A 31 year old man who wants to create a sport app that uses tech to make sports easy to track and manage.')#context.user_context)
+    app.state.user_context = (56, context.user_context)
     logger.info(f"User context set - User ID: {app.state.user_context[0]}, Context: {app.state.user_context[1][:100]}...")
     return app.state.user_context[0]
 
@@ -111,7 +111,7 @@ def get_script():
 
 @app.post("/api/agent_conversation")
 def get_agent_conversation():
-    """
+    """f
     Agents discuss the pitch with each other.
     Conversation is stored back into app.state.characters_contexts.
     """

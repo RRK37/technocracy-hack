@@ -78,7 +78,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
 
   // Discussion speech bubbles state (for DISCUSSING stage)
   const [discussionBubbles, setDiscussionBubbles] = useState<Array<{ characterId: number; text: string; x: number; y: number }>>([]);
-  const discussionConversationRef = useRef<Array<{ agentId: string; message: string }>>([]);
+  const discussionConversationRef = useRef<Array<{ agentId: number; message: string }>>([]);
   const discussionMessageIndexRef = useRef(0);
   const discussionIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -474,12 +474,12 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       // Fetch agent conversation
       fetch('http://localhost:8000/api/agent_conversation', { method: 'POST' })
         .then((res) => res.json())
-        .then((conversation: Array<Record<string, string>>) => {
+        .then((conversation: Array<{ agent_id: number; message: string }>) => {
           // Parse conversation into array of {agentId, message}
-          const parsed = conversation.map((item) => {
-            const agentId = Object.keys(item)[0];
-            return { agentId, message: item[agentId] };
-          });
+          const parsed = conversation.map((item) => ({
+            agentId: item.agent_id,
+            message: item.message || '',
+          }));
           discussionConversationRef.current = parsed;
 
           // Animate discussion bubbles
@@ -493,10 +493,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
               }
 
               const msg = parsed[idx];
-              // Find character by matching agent ID (e.g., "agent_003" -> id 3)
-              const charIdMatch = msg.agentId.match(/\d+/);
-              const charId = charIdMatch ? parseInt(charIdMatch[0], 10) : 1;
-              const char = simulationCharacters.find((c) => c.data.id === charId) || audience[idx % audience.length];
+              const char = simulationCharacters.find((c) => c.data.id === msg.agentId) || audience[idx % audience.length];
 
               if (char) {
                 setDiscussionBubbles([{
@@ -518,10 +515,10 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
           console.error('Failed to fetch agent conversation, using dummy:', err);
           // Dummy fallback
           const dummyConversation = [
-            { agentId: 'agent_001', message: "That pitch was really compelling!" },
-            { agentId: 'agent_002', message: "I agree, the market opportunity is huge." },
-            { agentId: 'agent_003', message: "But what about the competition?" },
-            { agentId: 'agent_001', message: "Good point, we should ask about that." },
+            { agentId: 1, message: "That pitch was really compelling!" },
+            { agentId: 2, message: "I agree, the market opportunity is huge." },
+            { agentId: 3, message: "But what about the competition?" },
+            { agentId: 1, message: "Good point, we should ask about that." },
           ];
           discussionConversationRef.current = dummyConversation;
 
@@ -534,9 +531,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
             }
 
             const msg = dummyConversation[idx];
-            const charIdMatch = msg.agentId.match(/\d+/);
-            const charId = charIdMatch ? parseInt(charIdMatch[0], 10) : 1;
-            const char = simulationCharacters.find((c) => c.data.id === charId) || audience[idx % audience.length];
+            const char = simulationCharacters.find((c) => c.data.id === msg.agentId) || audience[idx % audience.length];
 
             if (char) {
               setDiscussionBubbles([{

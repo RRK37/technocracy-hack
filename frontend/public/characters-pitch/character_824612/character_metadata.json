@@ -1,0 +1,25 @@
+{
+  "character_id": "824612",
+  "name": "Alexandra Tsylnitska",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQHi86E3Gy4wdA/profile-displayphoto-shrink_200_200/B4EZeMgyQxHYAc-/0/1750409094644?e=1767225600&v=beta&t=cpYELZxrpUyibErOEp3XMcK-sfjBjFUAP0f-8ftJtMI",
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "dark_brown",
+    "hair_length": "long",
+    "shirt_color": "green",
+    "gender": "female",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-pitch/character_824612/sprite_idle.png",
+    "characters-pitch/character_824612/sprite_walk.png",
+    "characters-pitch/character_824612/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T17:39:01.311697"
+}

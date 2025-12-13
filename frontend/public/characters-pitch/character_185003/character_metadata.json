@@ -1,0 +1,25 @@
+{
+  "character_id": "185003",
+  "name": "Skye Fletcher",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQHIUaAXQRsAXg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1693996279985?e=1767225600&v=beta&t=mJnzfNF1hXXn2NFA8_DwXakU4omZZ6hUfYssCIbpp1M",
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "light_brown",
+    "hair_length": "medium",
+    "shirt_color": "red",
+    "gender": "female",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-pitch/character_185003/sprite_idle.png",
+    "characters-pitch/character_185003/sprite_walk.png",
+    "characters-pitch/character_185003/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T17:39:17.715229"
+}

@@ -1,0 +1,43 @@
+{
+  "company_information": "",
+  "character_0001": {
+    "name": "Henry Allen",
+    "id": "0001",
+    "persona": "Self-taught AI engineer and entrepreneur focused on building and scaling AI-driven products. Experienced in voice systems, RAG pipelines, and rapid startup execution, including a 20-hour company exit. Active community leader running large developer hackathons and partnerships. Background spans AI engineering, growth, and marketing with strong hands-on technical and commercial execution."
+  },
+  "character_0002": {
+    "name": "Roméo Walter",
+    "id": "0002",
+    "persona": "Venture capital investor specialising in early-stage European software companies from Seed to Series B. Vice President at Dawn Capital with prior experience at Fly Ventures and Kerala Ventures. Strong background in economics, finance, and mathematics, with experience in strategy, board observation, and growth operations."
+  },
+  "character_0003": {
+    "name": "Alexandra Tsylnitska",
+    "id": "0003",
+    "persona": "Early-stage venture investor backing Seed+ European founders, currently at Dawn Capital. Previously an investor at Seedcamp with experience in fintech, entertainment tech, and growth partnerships. Former finance professional with a strong academic background in economics from Cambridge and Columbia."
+  },
+  "character_0004": {
+    "name": "Zoe (Ziwen) Qin",
+    "id": "0004",
+    "persona": "Venture capital investor at Dawn Capital with a background in physics and machine learning. Active board member across multiple AI and fintech startups. Also deeply involved in ecosystem building through hackathons and community initiatives, combining technical fluency with early-stage investing."
+  },
+  "character_0005": {
+    "name": "Ties Boukema",
+    "id": "0005",
+    "persona": "Head of Data, Tech & AI at Dawn Capital, leading proprietary AI platforms and data strategy. Co-founder of Cognitas and former Google analytics and data science leader. Extensive experience in applied machine learning, data engineering, and teaching technical skills, with a strong focus on AI-enabled relationship intelligence."
+  },
+  "character_0006": {
+    "name": "An N.",
+    "id": "0006",
+    "persona": "Investor relations analyst at Dawn Capital with experience supporting early-stage and growth-stage venture operations. Background includes founder support roles, project work at Goldman Sachs, and leadership in university organisations. Strong skills in project management, stakeholder communication, and operations."
+  },
+  "character_0007": {
+    "name": "Haakon Overli",
+    "id": "0007",
+    "persona": "General Partner and founder at Dawn Capital with nearly two decades of venture capital experience. Focused on fintech and SaaS investments across Europe, serving on multiple boards. Background in economics and mathematics with deep expertise in scaling high-growth technology companies."
+  },
+  "character_0008": {
+    "name": "Skye Fletcher",
+    "id": "0008",
+    "persona": "Venture capital investor at Dawn Capital focused on B2B software and fintech. Former Bain & Company consultant with experience in commercial due diligence and value creation. Strong engineering background from Cambridge, combining analytical rigor with early-stage investing."
+  }
+}
