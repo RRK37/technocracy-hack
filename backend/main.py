@@ -52,8 +52,22 @@ def gpt(prompt):
     """Call GPT or return dummy response if no API key"""
     if client is None:
         # Dummy response for testing without API key
-        if "plan" in prompt.lower():
+        if "generate a plan" in prompt.lower():
             return "1. Introduce yourself and your background. 2. Present the problem you are solving. 3. Explain your unique solution. 4. Show market opportunity and traction. 5. Ask for investment."
+        elif "audience member" in prompt.lower() or "discussing" in prompt.lower():
+            # Random short discussion responses for agent conversation
+            responses = [
+                "That's an interesting point about the market size.",
+                "I think the technology stack sounds solid.",
+                "What about the competitive landscape though?",
+                "The traction numbers are impressive.",
+                "I'd want to see more details on unit economics.",
+                "The team seems experienced in this space.",
+                "How do they plan to scale internationally?",
+                "The revenue model makes sense to me.",
+            ]
+            import random
+            return random.choice(responses)
         else:
             return "Good morning everyone, thank you for having me today. I'm excited to share my vision for revolutionizing the industry. The problem we're solving affects millions of people daily. Our solution is elegant and scalable. We've already seen incredible traction with early users. We're seeking investment to accelerate growth. I'd love to answer any questions you have."
     

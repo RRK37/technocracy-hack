@@ -426,6 +426,13 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       // Next -> DISCUSSING stage
       setPitchStage(PitchStage.DISCUSSING);
 
+      // Clear presenter speech bubble
+      setCurrentSpeechChunk(null);
+      if (chunkIntervalRef.current) {
+        clearInterval(chunkIntervalRef.current);
+        chunkIntervalRef.current = null;
+      }
+
       // Set up discuss formation (same as DISCUSS mode)
       simulationCharacters.forEach((char) => char.resetToWandering());
       setTrapCircles([]);
