@@ -18,7 +18,8 @@ from pydantic import BaseModel, ConfigDict
 import redis
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
+import dotenv
+dotenv.load_dotenv()
 # ============================================
 # CONFIGURATION
 # ============================================
