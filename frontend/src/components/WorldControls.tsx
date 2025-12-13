@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2 } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CharacterList } from '@/src/components/CharacterList';
 import type { Character } from '@/src/types/character';
+import { WorldMode, ModeFeatures } from '@/src/lib/world';
 import {
   Conversation,
   ConversationContent,
@@ -64,9 +65,12 @@ interface WorldControlsProps {
   onToggleInteractionRadius?: () => void;
   showTrapCircles?: boolean;
   onToggleTrapCircles?: () => void;
+  worldMode: WorldMode;
+  onSetWorldMode: (mode: WorldMode) => void;
+  modeConfig: ModeFeatures;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -153,6 +157,29 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               <span>{characters.length}</span>
             </div>
           </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">World Mode</span>
+            <div className="flex gap-1">
+              <Button
+                variant={worldMode === WorldMode.INTERACTIVE ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.INTERACTIVE)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.INTERACTIVE ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-transparent'}`}
+              >
+                <Zap className="size-3 mr-1" />
+                Interactive
+              </Button>
+              <Button
+                variant={worldMode === WorldMode.OBSERVE ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.OBSERVE)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.OBSERVE ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-transparent'}`}
+              >
+                <Eye className="size-3 mr-1" />
+                Observe
+              </Button>
+            </div>
+          </div>
           {trapCircleCount > 0 && onClearTrapCircles && (
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1 text-muted-foreground">
@@ -170,7 +197,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               </Button>
             </div>
           )}
-          {onToggleInteractionRadius && (
+          {modeConfig.interactionRadius && onToggleInteractionRadius && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Show Interaction Radius</span>
               <Button
@@ -183,7 +210,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               </Button>
             </div>
           )}
-          {onToggleTrapCircles && (
+          {modeConfig.trapCircles && onToggleTrapCircles && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Show Trap Circles</span>
               <Button

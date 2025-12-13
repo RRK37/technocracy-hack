@@ -7,7 +7,7 @@
 import { useRef, useEffect, forwardRef, useState } from 'react';
 import type { Camera } from '@/src/hooks/useCamera';
 import type { SimulationCharacter } from '@/src/lib/character';
-import { WORLD_CONFIG, CHARACTER_CONFIG, TrapCircle, CharacterState } from '@/src/lib/world';
+import { WORLD_CONFIG, CHARACTER_CONFIG, TrapCircle, CharacterState, ModeFeatures } from '@/src/lib/world';
 import { drawGrid } from '@/src/lib/canvas-utils';
 
 interface WorldCanvasProps {
@@ -24,11 +24,12 @@ interface WorldCanvasProps {
   onEndInteraction: (character: SimulationCharacter) => void;
   showInteractionRadius: boolean;
   showTrapCircles: boolean;
+  modeConfig: ModeFeatures;
 }
 
 export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
   function WorldCanvas(
-    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles },
+    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles, modeConfig },
     ref
   ) {
     const internalRef = useRef<HTMLCanvasElement>(null);
@@ -51,6 +52,7 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
     const trapCirclesRef = useRef(trapCircles);
     const showInteractionRadiusRef = useRef(showInteractionRadius);
     const showTrapCirclesRef = useRef(showTrapCircles);
+    const modeConfigRef = useRef(modeConfig);
 
     useEffect(() => {
       charactersRef.current = characters;
@@ -71,6 +73,10 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
     useEffect(() => {
       showTrapCirclesRef.current = showTrapCircles;
     }, [showTrapCircles]);
+
+    useEffect(() => {
+      modeConfigRef.current = modeConfig;
+    }, [modeConfig]);
 
     // Convert screen coordinates to world coordinates
     const screenToWorld = (screenX: number, screenY: number) => {
@@ -150,8 +156,8 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
       };
 
       const combinedMouseDown = (e: MouseEvent) => {
-        // Ctrl + Left click = start drawing trap circle
-        if (e.ctrlKey && e.button === 0) {
+        // Ctrl + Left click = start drawing trap circle (only if mode allows)
+        if (e.ctrlKey && e.button === 0 && modeConfigRef.current.trapCircles) {
           e.preventDefault();
           const { x, y } = screenToWorld(e.clientX, e.clientY);
           trapCircleStartRef.current = { x, y };
@@ -238,8 +244,10 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
                 // Left click - toggle speech bubble
                 character.toggleSpeechBubble();
               } else if (e.button === 2) {
-                // Right click - toggle sit
-                character.toggleSit();
+                // Right click - toggle sit (only if mode allows)
+                if (modeConfigRef.current.sitting) {
+                  character.toggleSit();
+                }
               }
             }
           }

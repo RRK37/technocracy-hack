@@ -535,6 +535,35 @@ export class SimulationCharacter {
   }
 
   /**
+   * Force reset to wandering state (used when switching modes)
+   */
+  resetToWandering(): void {
+    // If interacting, end the interaction
+    if (this.state === CharacterState.INTERACTING) {
+      this.endInteraction();
+      return; // endInteraction already sets the state
+    }
+
+    // If sitting, restore velocity
+    if (this.state === CharacterState.SITTING) {
+      this.vx = this.savedVx || CHARACTER_CONFIG.SPEED * (Math.random() - 0.5) * 2;
+      this.vy = this.savedVy || CHARACTER_CONFIG.SPEED * (Math.random() - 0.5) * 2;
+    }
+
+    // Reset state
+    this.state = CharacterState.WANDERING;
+    this.speechText = '';
+    this.speechTimer = 0;
+
+    // Ensure character has some velocity
+    if (Math.abs(this.vx) < 0.1 && Math.abs(this.vy) < 0.1) {
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * CHARACTER_CONFIG.SPEED;
+      this.vy = Math.sin(angle) * CHARACTER_CONFIG.SPEED;
+    }
+  }
+
+  /**
    * Check if this character can interact with others (not already busy)
    */
   canInteract(): boolean {
