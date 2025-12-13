@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -70,9 +70,10 @@ interface WorldControlsProps {
   modeConfig: ModeFeatures;
   pitchStage?: PitchStage;
   onAdvancePitchStage?: () => void;
+  onBack?: () => void;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -153,7 +154,19 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
       <Tabs defaultValue="chat" className="flex flex-col h-full">
         <SidebarHeader className="border-b border-sidebar-border px-4 py-3 bg-sidebar space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-normal text-sidebar-foreground">Technocracy</h2>
+            <div className="flex items-center gap-2">
+              {onBack && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4" />
+                </Button>
+              )}
+              <h2 className="text-sm font-normal text-sidebar-foreground">Technocracy</h2>
+            </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="size-3" />
               <span>{characters.length}</span>

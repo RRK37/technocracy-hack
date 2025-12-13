@@ -14,7 +14,12 @@ import { SimulationCharacter } from '@/src/lib/character';
 import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
-export function CharacterWorld() {
+interface CharacterWorldProps {
+  initialMode?: WorldMode;
+  onBack?: () => void;
+}
+
+export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack }: CharacterWorldProps) {
   // Load character data
   const { characters: characterData, isLoading, isError } = useCharacterData();
 
@@ -40,8 +45,8 @@ export function CharacterWorld() {
   // Toggle for showing trap circles
   const [showTrapCircles, setShowTrapCircles] = useState(true);
 
-  // World mode state
-  const [worldMode, setWorldMode] = useState<WorldMode>(WorldMode.INTERACTIVE);
+  // World mode state (initialized from prop)
+  const [worldMode, setWorldMode] = useState<WorldMode>(initialMode);
   const modeConfig = MODE_CONFIG[worldMode];
 
   // Discussion system state (for DISCUSS mode)
@@ -564,6 +569,7 @@ export function CharacterWorld() {
         modeConfig={modeConfig}
         pitchStage={pitchStage}
         onAdvancePitchStage={advancePitchStage}
+        onBack={onBack}
       />
     </SidebarProvider>
   );
