@@ -36,6 +36,13 @@ def format_char_id(char_id):
     """Format character ID with leading zeros (e.g., 1 -> '0001')"""
     return str(char_id).zfill(4)
 
+def gpt(prompt):
+    response = client.responses.create(
+        model="gpt-4o-mini",
+        input=prompt,
+    )
+    return response.output_text
+
 data = None
 with open("../public/all-characters.json", "r") as f:
     data = json.load(f)
@@ -56,32 +63,22 @@ def set_context(context: Context):
 @app.post("/api/user_context")
 def set_user_context(context: UserContext):
     """Returns the id of the user agent"""
-    app.state.user_context = (56, context.user_context)
+    app.state.user_context = (56, 'A 31 year old man who wants to create a sport app that uses tech to make sports easy to track and manage.')#context.user_context)
     return app.state.user_context[0]
+
+app.state.script_plan = ""
+
+@app.post("/api/script_plan")
+def get_script_plan():
+    """Returns the transcript of the pitch"""
+    app.state.script_plan = gpt("Generate a plan for a pitch to vcs, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown')
+    return app.state.script_plan
 
 @app.post("/api/transcript")
 def get_transcript():
     """Returns the transcript of the pitch"""
-
-    script_plan_prompt = "Generate a plan for a pitch to vcs, here is the users context: " + app.state.user_context[1]
-    
-    response = client.responses.create(
-        model="gpt-4o-mini",
-        input=script_plan_prompt,
-        max_tokens=100,
-        temperature=0.8
-    )
-    response.output_text
-    
-    return [{
-        "user": "Today I want to pitch my idea for a new company about xyz",
-    }, {
-        "agent_0003": "I think it's a good idea",
-    }, {
-        "user": "Thank you",
-    }, {
-        "agent_0003": "You're welcome",
-    }]
+    pitch = gpt("Generate a transcript for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just the pitch')
+    return pitch
 
 @app.post("/api/agent_conversation")
 def get_agent_conversation():
