@@ -76,6 +76,16 @@ export class SimulationCharacter {
   interactionTargetY: number = 0;
   walkingToInteraction: boolean = false;
 
+  // Audience formation properties
+  audienceTargetX: number = 0;
+  audienceTargetY: number = 0;
+  isPresenter: boolean = false;
+  walkingToAudiencePosition: boolean = false;
+
+  // Walk-to-area properties (for walking then wandering)
+  walkTargetX: number = 0;
+  walkTargetY: number = 0;
+
   // Aura determines interaction radius (0-1, randomly assigned)
   aura: number;
 
@@ -207,6 +217,76 @@ export class SimulationCharacter {
   private move(trapCircles: TrapCircle[] = []): void {
     // Don't move if sitting
     if (this.state === CharacterState.SITTING) {
+      return;
+    }
+
+    // Handle walking to audience position
+    if ((this.state === CharacterState.AUDIENCE || this.state === CharacterState.PRESENTING) && this.walkingToAudiencePosition) {
+      const dx = this.audienceTargetX - this.x;
+      const dy = this.audienceTargetY - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 3) {
+        // Arrived at target position
+        this.x = this.audienceTargetX;
+        this.y = this.audienceTargetY;
+        this.walkingToAudiencePosition = false;
+        this.vx = 0;
+        this.vy = 0;
+        // Face down (toward audience) for presenter, face up (toward presenter) for audience
+        this.row = this.isPresenter ? Direction.DOWN : Direction.UP;
+      } else {
+        // Walk toward target at normal speed
+        const speed = CHARACTER_CONFIG.SPEED * 1.5;
+        this.vx = (dx / distance) * speed;
+        this.vy = (dy / distance) * speed;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Update facing direction based on movement
+        if (Math.abs(this.vx) > Math.abs(this.vy)) {
+          this.row = this.vx > 0 ? Direction.RIGHT : Direction.LEFT;
+        } else {
+          this.row = this.vy > 0 ? Direction.DOWN : Direction.UP;
+        }
+      }
+      return;
+    }
+
+    // Don't move if in audience/presenting (and not walking)
+    if (this.state === CharacterState.AUDIENCE || this.state === CharacterState.PRESENTING) {
+      return;
+    }
+
+    // Handle walking to area (then transition to wandering)
+    if (this.state === CharacterState.WALKING_TO_AREA) {
+      const dx = this.walkTargetX - this.x;
+      const dy = this.walkTargetY - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 5) {
+        // Arrived at target - transition to wandering with random velocity
+        this.x = this.walkTargetX;
+        this.y = this.walkTargetY;
+        this.state = CharacterState.WANDERING;
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * CHARACTER_CONFIG.SPEED;
+        this.vy = Math.sin(angle) * CHARACTER_CONFIG.SPEED;
+      } else {
+        // Walk toward target at normal speed
+        const speed = CHARACTER_CONFIG.SPEED * 1.5;
+        this.vx = (dx / distance) * speed;
+        this.vy = (dy / distance) * speed;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Update facing direction based on movement
+        if (Math.abs(this.vx) > Math.abs(this.vy)) {
+          this.row = this.vx > 0 ? Direction.RIGHT : Direction.LEFT;
+        } else {
+          this.row = this.vy > 0 ? Direction.DOWN : Direction.UP;
+        }
+      }
       return;
     }
 
@@ -423,7 +503,7 @@ export class SimulationCharacter {
     // Calculate midpoint and radius for trap circle
     const midX = (this.x + partner.x) / 2;
     const midY = (this.y + partner.y) / 2;
-    const radius = 550; // Fixed radius for interaction circle
+    const radius = 200; // Fixed radius for interaction circle
 
     // Set target positions (characters will walk there):
     // Use clamp to keep positions within world boundaries
@@ -535,10 +615,69 @@ export class SimulationCharacter {
   }
 
   /**
+   * Force reset to wandering state (used when switching modes)
+   */
+  resetToWandering(): void {
+    // If interacting, end the interaction
+    if (this.state === CharacterState.INTERACTING) {
+      this.endInteraction();
+      return; // endInteraction already sets the state
+    }
+
+    // If sitting or in audience, restore velocity
+    if (this.state === CharacterState.SITTING || this.state === CharacterState.AUDIENCE || this.state === CharacterState.PRESENTING) {
+      this.vx = this.savedVx || CHARACTER_CONFIG.SPEED * (Math.random() - 0.5) * 2;
+      this.vy = this.savedVy || CHARACTER_CONFIG.SPEED * (Math.random() - 0.5) * 2;
+      // Reset audience-specific properties
+      this.isPresenter = false;
+      this.walkingToAudiencePosition = false;
+    }
+
+    // Reset state
+    this.state = CharacterState.WANDERING;
+    this.speechText = '';
+    this.speechTimer = 0;
+
+    // Ensure character has some velocity
+    if (Math.abs(this.vx) < 0.1 && Math.abs(this.vy) < 0.1) {
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * CHARACTER_CONFIG.SPEED;
+      this.vy = Math.sin(angle) * CHARACTER_CONFIG.SPEED;
+    }
+  }
+
+  /**
+   * Set walk target (will walk there then start wandering)
+   */
+  setWalkTarget(x: number, y: number): void {
+    this.walkTargetX = x;
+    this.walkTargetY = y;
+    this.state = CharacterState.WALKING_TO_AREA;
+  }
+
+  /**
    * Check if this character can interact with others (not already busy)
    */
   canInteract(): boolean {
     return this.state === CharacterState.WANDERING || this.state === CharacterState.SITTING;
+  }
+
+  /**
+   * Set position for audience formation
+   */
+  setAudiencePosition(x: number, y: number, isPresenter: boolean): void {
+    // Save current velocity for later restoration
+    this.savedVx = this.vx;
+    this.savedVy = this.vy;
+
+    // Set target position
+    this.audienceTargetX = x;
+    this.audienceTargetY = y;
+    this.isPresenter = isPresenter;
+    this.walkingToAudiencePosition = true;
+
+    // Set state
+    this.state = isPresenter ? CharacterState.PRESENTING : CharacterState.AUDIENCE;
   }
 
   /**
@@ -639,6 +778,58 @@ export class SimulationCharacter {
           ctx.drawImage(
             this.idleImage,
             0, this.row * idleFrameH, idleFrameW, idleFrameH,
+            this.x - currentW / 2, this.y - currentH / 2, currentW, currentH
+          );
+        }
+      } else if (this.state === CharacterState.PRESENTING) {
+        // Presenter: if walking, use walk animation; otherwise use idle facing down
+        if (this.walkingToAudiencePosition) {
+          drawSprite(
+            ctx,
+            this.image,
+            this.frameIndex,
+            this.row,
+            this.x,
+            this.y,
+            currentW,
+            currentH
+          );
+        } else if (this.idleImageLoaded && this.idleImage) {
+          // Idle sprite: row 0 (facing down), col 0
+          const idleFrameW = this.idleImage.width / 2;
+          const idleFrameH = this.idleImage.height / 4;
+          const idleCol = 0;
+          const idleRow = 0; // Row 1 (0-indexed = 0) - facing up (back to user)
+
+          ctx.drawImage(
+            this.idleImage,
+            idleCol * idleFrameW, idleRow * idleFrameH, idleFrameW, idleFrameH,
+            this.x - currentW / 2, this.y - currentH / 2, currentW, currentH
+          );
+        }
+      } else if (this.state === CharacterState.AUDIENCE) {
+        // Audience: if walking, use walk animation; otherwise sit facing up (toward presenter)
+        if (this.walkingToAudiencePosition) {
+          drawSprite(
+            ctx,
+            this.image,
+            this.frameIndex,
+            this.row,
+            this.x,
+            this.y,
+            currentW,
+            currentH
+          );
+        } else if (this.sitImageLoaded && this.sitImage) {
+          // Sit sprite: row 3 col 1 (facing down, faces visible to user)
+          const sitFrameW = this.sitImage.width / 3;
+          const sitFrameH = this.sitImage.height / 4;
+          const sitCol = 1;
+          const sitRow = 2; // Row 3 (0-indexed = 2) - facing down
+
+          ctx.drawImage(
+            this.sitImage,
+            sitCol * sitFrameW, sitRow * sitFrameH, sitFrameW, sitFrameH,
             this.x - currentW / 2, this.y - currentH / 2, currentW, currentH
           );
         }

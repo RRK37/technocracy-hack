@@ -11,7 +11,7 @@ import { WORLD_CONFIG } from '@/src/lib/world';
  * Fetch character data from the JSON file
  */
 async function fetchCharacterData(): Promise<CharactersData> {
-  const response = await fetch('/characters/data/all-characters.json');
+  const response = await fetch('/all-characters.json');
   if (!response.ok) {
     throw new Error('Failed to load character data');
   }

@@ -11,7 +11,7 @@ import { useCharacterData } from '@/src/hooks/useCharacterData';
 import { useCamera } from '@/src/hooks/useCamera';
 import { useGameLoop } from '@/src/hooks/useGameLoop';
 import { SimulationCharacter } from '@/src/lib/character';
-import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState } from '@/src/lib/world';
+import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG } from '@/src/lib/world';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 export function CharacterWorld() {
@@ -39,6 +39,10 @@ export function CharacterWorld() {
 
   // Toggle for showing trap circles
   const [showTrapCircles, setShowTrapCircles] = useState(true);
+
+  // World mode state
+  const [worldMode, setWorldMode] = useState<WorldMode>(WorldMode.INTERACTIVE);
+  const modeConfig = MODE_CONFIG[worldMode];
 
   // Add a new trap circle
   const addTrapCircle = useCallback((circle: TrapCircle) => {
@@ -90,6 +94,105 @@ export function CharacterWorld() {
   // Track which trap circles are from interactions (for auto-removal)
   const interactionTrapCircleIds = useRef<Map<string, string>>(new Map()); // characterId -> trapCircleId
 
+  // Reset all characters when switching to Observe mode
+  useEffect(() => {
+    if (worldMode === WorldMode.OBSERVE && simulationCharacters.length > 0) {
+      // Reset all characters to wandering
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      // Clear all trap circles
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+    }
+  }, [worldMode, simulationCharacters]);
+
+  // Arrange characters in audience formation when switching to PRESENTING mode
+  useEffect(() => {
+    if (worldMode === WorldMode.PRESENTING && modeConfig.audienceFormation && simulationCharacters.length > 0) {
+      // First reset all characters
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+
+      // Find Jordan as presenter (or first character if Jordan not found)
+      const presenter = simulationCharacters.find((char) =>
+        char.data.name.toLowerCase() === 'jordan'
+      ) || simulationCharacters[0];
+
+      // Calculate formation positions centered in world
+      const centerX = WORLD_CONFIG.WIDTH / 2;
+      const centerY = WORLD_CONFIG.HEIGHT / 2;
+
+      // Set presenter position (front center - at bottom facing away from user)
+      presenter.setAudiencePosition(centerX, centerY + 200, true);
+
+      // Arrange audience in rows above presenter (facing down toward user)
+      const audience = simulationCharacters.filter((c) => c !== presenter);
+      const cols = Math.min(8, Math.ceil(Math.sqrt(audience.length * 1.5))); // Wider than tall
+      const spacingX = 80;
+      const spacingY = 70;
+      const startY = centerY - 100; // Start above presenter
+
+      audience.forEach((char, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        // Center each row
+        const rowCharCount = Math.min(cols, audience.length - row * cols);
+        const rowStartX = centerX - ((rowCharCount - 1) * spacingX) / 2;
+        const x = rowStartX + col * spacingX;
+        const y = startY - row * spacingY; // Rows go upward (negative Y)
+        char.setAudiencePosition(x, y, false);
+      });
+    }
+  }, [worldMode, modeConfig.audienceFormation, simulationCharacters]);
+
+  // SCRATCH mode: Waiting room - audience in top-left, Jordan on right
+  useEffect(() => {
+    if (worldMode === WorldMode.SCRATCH && simulationCharacters.length > 0) {
+      // Reset all characters first
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+
+      // Find Jordan as presenter (or first character if Jordan not found)
+      const presenter = simulationCharacters.find((char) =>
+        char.data.name.toLowerCase() === 'jordan'
+      ) || simulationCharacters[0];
+
+      // Calculate dimensions for top-left area (15% of world = ~38% width/height)
+      const areaWidth = WORLD_CONFIG.WIDTH * 0.38;
+      const areaHeight = WORLD_CONFIG.HEIGHT * 0.38;
+      const centerX = areaWidth / 2;
+      const centerY = areaHeight / 2;
+      const radius = Math.min(areaWidth, areaHeight) / 2 - 50; // Circular trap area
+
+      // Create trap circle in top-left corner
+      const trapCircle: TrapCircle = {
+        id: `scratch-trap-${Date.now()}`,
+        x: centerX + 50, // Offset from edge
+        y: centerY + 50,
+        radius: radius,
+      };
+      setTrapCircles([trapCircle]);
+
+      // Position Jordan on the right side, standing and facing left
+      const jordanX = WORLD_CONFIG.WIDTH * 0.8;
+      const jordanY = WORLD_CONFIG.HEIGHT / 2;
+      presenter.setAudiencePosition(jordanX, jordanY, true);
+
+      // Walk audience characters to the trap circle area
+      const audience = simulationCharacters.filter((c) => c !== presenter);
+      audience.forEach((char) => {
+        // Random target position within the trap circle
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * (radius - 30);
+        const targetX = trapCircle.x + Math.cos(angle) * dist;
+        const targetY = trapCircle.y + Math.sin(angle) * dist;
+        // Set walk target (will walk there then start wandering)
+        char.setWalkTarget(targetX, targetY);
+      });
+    }
+  }, [worldMode, simulationCharacters]);
+
   // Game loop - update all characters and check for interactions
   useGameLoop(
     useCallback(
@@ -97,76 +200,80 @@ export function CharacterWorld() {
         // Update all characters
         simulationCharacters.forEach((char) => char.update(deltaTime, simulationCharacters, trapCircles));
 
-        // Check for potential interactions between characters
-        for (let i = 0; i < simulationCharacters.length; i++) {
-          const char1 = simulationCharacters[i];
-          if (!char1.canInteract()) continue;
+        // Check for potential interactions between characters (only in interactive mode)
+        if (modeConfig.interactions) {
+          for (let i = 0; i < simulationCharacters.length; i++) {
+            const char1 = simulationCharacters[i];
+            if (!char1.canInteract()) continue;
 
-          for (let j = i + 1; j < simulationCharacters.length; j++) {
-            const char2 = simulationCharacters[j];
-            if (!char2.canInteract()) continue;
+            for (let j = i + 1; j < simulationCharacters.length; j++) {
+              const char2 = simulationCharacters[j];
+              if (!char2.canInteract()) continue;
 
-            // Check if interaction radii overlap
-            const dx = char2.x - char1.x;
-            const dy = char2.y - char1.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const combinedRadius = char1.interactionRadius + char2.interactionRadius;
+              // Check if interaction radii overlap
+              const dx = char2.x - char1.x;
+              const dy = char2.y - char1.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              const combinedRadius = char1.interactionRadius + char2.interactionRadius;
 
-            if (distance < combinedRadius) {
-              // Roll for interaction
-              if (Math.random() < CHARACTER_CONFIG.INTERACTION_CHANCE) {
-                const circleInfo = char1.startInteraction(char2);
-                if (circleInfo) {
-                  // Create auto trap circle
-                  const trapId = `interaction-${Date.now()}`;
-                  const newCircle: TrapCircle = {
-                    id: trapId,
-                    x: circleInfo.x,
-                    y: circleInfo.y,
-                    radius: circleInfo.radius,
-                  };
-                  addTrapCircle(newCircle);
-                  // Track this circle for the characters
-                  interactionTrapCircleIds.current.set(char1.id, trapId);
-                  interactionTrapCircleIds.current.set(char2.id, trapId);
+              if (distance < combinedRadius) {
+                // Roll for interaction
+                if (Math.random() < CHARACTER_CONFIG.INTERACTION_CHANCE) {
+                  const circleInfo = char1.startInteraction(char2);
+                  if (circleInfo) {
+                    // Create auto trap circle
+                    const trapId = `interaction-${Date.now()}`;
+                    const newCircle: TrapCircle = {
+                      id: trapId,
+                      x: circleInfo.x,
+                      y: circleInfo.y,
+                      radius: circleInfo.radius,
+                    };
+                    addTrapCircle(newCircle);
+                    // Track this circle for the characters
+                    interactionTrapCircleIds.current.set(char1.id, trapId);
+                    interactionTrapCircleIds.current.set(char2.id, trapId);
+                  }
                 }
               }
             }
           }
-        }
+        } // end if modeConfig.interactions
 
-        // Check for characters joining existing interactions
-        for (const char of simulationCharacters) {
-          if (char.state !== CharacterState.WANDERING) continue;
+        // Check for characters joining existing interactions (only in interactive mode)
+        if (modeConfig.interactions) {
+          for (const char of simulationCharacters) {
+            if (char.state !== CharacterState.WANDERING) continue;
 
-          // Check if near any interaction trap circle
-          for (const circle of trapCircles) {
-            if (!circle.id.startsWith('interaction-')) continue;
+            // Check if near any interaction trap circle
+            for (const circle of trapCircles) {
+              if (!circle.id.startsWith('interaction-')) continue;
 
-            const dx = char.x - circle.x;
-            const dy = char.y - circle.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+              const dx = char.x - circle.x;
+              const dy = char.y - circle.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
 
-            // If within interaction range of the circle
-            if (dist < circle.radius + char.interactionRadius) {
-              // Find an interacting character in this circle
-              const interactingMember = simulationCharacters.find(
-                c => c.state === CharacterState.INTERACTING &&
-                  interactionTrapCircleIds.current.get(c.id) === circle.id
-              );
+              // If within interaction range of the circle
+              if (dist < circle.radius + char.interactionRadius) {
+                // Find an interacting character in this circle
+                const interactingMember = simulationCharacters.find(
+                  c => c.state === CharacterState.INTERACTING &&
+                    interactionTrapCircleIds.current.get(c.id) === circle.id
+                );
 
-              if (interactingMember && Math.random() < CHARACTER_CONFIG.INTERACTION_CHANCE * 0.5) {
-                // Try to join the interaction
-                if (char.joinInteraction(interactingMember)) {
-                  // Track this character with the same circle
-                  interactionTrapCircleIds.current.set(char.id, circle.id);
+                if (interactingMember && Math.random() < CHARACTER_CONFIG.INTERACTION_CHANCE * 0.5) {
+                  // Try to join the interaction
+                  if (char.joinInteraction(interactingMember)) {
+                    // Track this character with the same circle
+                    interactionTrapCircleIds.current.set(char.id, circle.id);
+                  }
                 }
               }
             }
           }
-        }
+        } // end if modeConfig.interactions
       },
-      [simulationCharacters, trapCircles, addTrapCircle]
+      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions]
     ),
     simulationCharacters.length > 0
   );
@@ -245,12 +352,25 @@ export function CharacterWorld() {
             onAddTrapCircle={addTrapCircle}
             onRemoveTrapCircle={removeTrapCircle}
             onEndInteraction={endCharacterInteraction}
-            showInteractionRadius={showInteractionRadius}
-            showTrapCircles={showTrapCircles}
+            showInteractionRadius={modeConfig.interactionRadius && showInteractionRadius}
+            showTrapCircles={modeConfig.trapCircles && showTrapCircles}
+            modeConfig={modeConfig}
           />
         </div>
       </SidebarInset>
-      <WorldControls onAsk={handleAsk} characters={characterData} onClearTrapCircles={clearAllTrapCircles} trapCircleCount={trapCircles.length} showInteractionRadius={showInteractionRadius} onToggleInteractionRadius={() => setShowInteractionRadius(!showInteractionRadius)} showTrapCircles={showTrapCircles} onToggleTrapCircles={() => setShowTrapCircles(!showTrapCircles)} />
+      <WorldControls
+        onAsk={handleAsk}
+        characters={characterData}
+        onClearTrapCircles={clearAllTrapCircles}
+        trapCircleCount={trapCircles.length}
+        showInteractionRadius={showInteractionRadius}
+        onToggleInteractionRadius={() => setShowInteractionRadius(!showInteractionRadius)}
+        showTrapCircles={showTrapCircles}
+        onToggleTrapCircles={() => setShowTrapCircles(!showTrapCircles)}
+        worldMode={worldMode}
+        onSetWorldMode={setWorldMode}
+        modeConfig={modeConfig}
+      />
     </SidebarProvider>
   );
 }

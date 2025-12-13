@@ -57,7 +57,62 @@ export enum CharacterState {
   TALKING = 'TALKING',
   SITTING = 'SITTING',
   INTERACTING = 'INTERACTING', // Two characters interacting with each other
+  AUDIENCE = 'AUDIENCE',       // Sitting in audience formation
+  PRESENTING = 'PRESENTING',   // Standing at front as presenter
+  WALKING_TO_AREA = 'WALKING_TO_AREA', // Walking to a target then wandering
 }
+
+// World modes
+export enum WorldMode {
+  INTERACTIVE = 'interactive',  // Full interaction dynamics: trap circles, character interactions
+  OBSERVE = 'observe',          // Just wandering characters, no interactions
+  PRESENTING = 'presenting',    // Audience formation with presenter at front
+  SCRATCH = 'scratch',          // Sandbox mode for experimenting with new features
+}
+
+// Mode feature configuration
+export interface ModeFeatures {
+  trapCircles: boolean;         // Can create/show trap circles
+  interactions: boolean;        // Characters can interact with each other
+  interactionRadius: boolean;   // Show interaction radius around characters
+  sitting: boolean;             // Characters can sit when clicked
+  audienceFormation: boolean;   // Arrange characters in audience rows
+}
+
+// Configuration for each world mode
+export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
+  [WorldMode.INTERACTIVE]: {
+    trapCircles: true,
+    interactions: true,
+    interactionRadius: true,
+    sitting: true,
+    audienceFormation: false,
+  },
+  [WorldMode.OBSERVE]: {
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: false,
+  },
+  [WorldMode.PRESENTING]: {
+    // Audience formation with Jordan as presenter
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: true,
+  },
+  [WorldMode.SCRATCH]: {
+    // Sandbox mode - starts with OBSERVE defaults
+    // Modify these as you experiment with new features
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: false,
+  },
+};
 
 /**
  * Pre-defined responses for speech bubbles
