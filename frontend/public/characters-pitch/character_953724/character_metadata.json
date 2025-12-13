@@ -1,0 +1,25 @@
+{
+  "character_id": "953724",
+  "name": "Farhan Shaikh",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQF6puWDMzjutg/profile-displayphoto-shrink_200_200/B4EZblbMPTHcAY-/0/1747605833215?e=1767225600&v=beta&t=QyAszk2ysNfzVg4Rzqs57yMCsttND1B7iPZ8PIg1o88",
+  "extracted_features": {
+    "skin_color": "olive",
+    "hair_color": "black",
+    "hair_length": "short",
+    "shirt_color": "white",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_953724/sprite_idle.png",
+    "characters-general/character_953724/sprite_walk.png",
+    "characters-general/character_953724/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:21:03.926642"
+}

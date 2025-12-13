@@ -1,9 +1,9 @@
 {
   "extracted_features": {
-    "skin_color": "light",
-    "hair_color": "light_brown",
+    "skin_color": "olive",
+    "hair_color": "black",
     "hair_length": "short",
-    "shirt_color": "black",
+    "shirt_color": "white",
     "gender": "male",
     "confidence": {
       "gender": "high",
@@ -15,8 +15,8 @@
   },
   "selected_style": {
     "gender": "male",
-    "hair_style": "cowlick"
+    "hair_style": "parted"
   },
-  "generated": "2025-12-13T19:21:14.257557",
+  "generated": "2025-12-13T19:21:03.926465",
   "method": "OpenAI GPT-4 Vision API"
 }

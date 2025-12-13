@@ -44,5 +44,65 @@
     "name": "Jordan",
     "id": "0009",
     "persona": "The presenter. A passionate entrepreneur pitching their startup idea to the VCs."
+  },
+  "character_0010": {
+    "name": "Niels Andriesse",
+    "id": "0010",
+    "persona": "Tech entrepreneur and hackathon participant with experience in decentralized systems and privacy-focused applications."
+  },
+  "character_0011": {
+    "name": "Abdussalam Popoola",
+    "id": "0011",
+    "persona": "Software developer and hackathon participant passionate about fintech and payment solutions in emerging markets."
+  },
+  "character_0012": {
+    "name": "Botir Khaltaev",
+    "id": "0012",
+    "persona": "AI engineer and hackathon participant focused on machine learning applications and automation."
+  },
+  "character_0013": {
+    "name": "Aman Sah",
+    "id": "0013",
+    "persona": "Full-stack developer and hackathon participant interested in education technology and social impact startups."
+  },
+  "character_0014": {
+    "name": "Rohith Raghunathan Nair",
+    "id": "0014",
+    "persona": "Data scientist and hackathon participant with expertise in analytics and business intelligence solutions."
+  },
+  "character_0015": {
+    "name": "Farhan Shaikh",
+    "id": "0015",
+    "persona": "Mobile developer and hackathon participant focused on consumer apps and user experience design."
+  },
+  "character_0016": {
+    "name": "Abdur Razzak",
+    "id": "0016",
+    "persona": "Backend engineer and hackathon participant experienced in scalable systems and cloud architecture."
+  },
+  "character_0017": {
+    "name": "Leonardo O.",
+    "id": "0017",
+    "persona": "Product designer and hackathon participant passionate about creating intuitive user interfaces."
+  },
+  "character_0018": {
+    "name": "Luka Dadiani",
+    "id": "0018",
+    "persona": "Blockchain developer and hackathon participant interested in Web3 and decentralized finance."
+  },
+  "character_0019": {
+    "name": "Pravin Paratey",
+    "id": "0019",
+    "persona": "Senior engineer and hackathon participant with deep experience in system design and technical leadership."
+  },
+  "character_0020": {
+    "name": "Mo Elkhidir",
+    "id": "0020",
+    "persona": "Growth engineer and hackathon participant focused on data-driven marketing and user acquisition."
+  },
+  "character_0021": {
+    "name": "David Gelberg",
+    "id": "0021",
+    "persona": "Startup founder and hackathon participant with experience launching and scaling tech companies."
   }
 }

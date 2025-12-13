@@ -21,6 +21,7 @@ async function fetchCharacterData(): Promise<CharactersData> {
   if (!rawData.characters) {
     // Mapping from character name to actual folder ID
     const nameToFolder: Record<string, string> = {
+      // Original pitch characters
       'Henry Allen': '227243',
       'Roméo Walter': '135817',
       'Alexandra Tsylnitska': '824612',
@@ -30,6 +31,19 @@ async function fetchCharacterData(): Promise<CharactersData> {
       'Haakon Overli': '194266',
       'Skye Fletcher': '185003',
       'Jordan': 'jordan', // Presenter - uses character_jordan folder
+      // General characters
+      'Niels Andriesse': '878698',
+      'Abdussalam Popoola': '048991',
+      'Botir Khaltaev': '947153',
+      'Aman Sah': '720455',
+      'Rohith Raghunathan Nair': '197121',
+      'Farhan Shaikh': '953724',
+      'Abdur Razzak': '490152',
+      'Leonardo O.': '249825',
+      'Luka Dadiani': '100680',
+      'Pravin Paratey': '129521',
+      'Mo Elkhidir': '018513',
+      'David Gelberg': '637094',
     };
 
     // Convert flat format to expected format

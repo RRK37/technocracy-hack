@@ -5,7 +5,7 @@
 export const WORLD_CONFIG = {
   WIDTH: 3000,
   HEIGHT: 1500,
-  NUM_CHARACTERS: 9, // 8 VCs + Jordan (presenter)
+  NUM_CHARACTERS: 21, // 8 VCs + Jordan (presenter) + 12 general participants
 } as const;
 
 // Trap circle that acts as a boundary

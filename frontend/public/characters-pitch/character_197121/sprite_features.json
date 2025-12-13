@@ -1,7 +1,7 @@
 {
   "extracted_features": {
-    "skin_color": "light",
-    "hair_color": "light_brown",
+    "skin_color": "brown",
+    "hair_color": "black",
     "hair_length": "short",
     "shirt_color": "black",
     "gender": "male",
@@ -17,6 +17,6 @@
     "gender": "male",
     "hair_style": "cowlick"
   },
-  "generated": "2025-12-13T19:21:14.257557",
+  "generated": "2025-12-13T19:21:02.213774",
   "method": "OpenAI GPT-4 Vision API"
 }

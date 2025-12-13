@@ -1,0 +1,25 @@
+{
+  "character_id": "878698",
+  "name": "Niels Andriesse",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQGeqElumAwBIw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1701612551531?e=1767225600&v=beta&t=wfJ8QzwA5JWrw2QWDYbWR_zr9eULGDK_wRJZxL1-uo4",
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "blonde",
+    "hair_length": "short",
+    "shirt_color": "white",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_878698/sprite_idle.png",
+    "characters-general/character_878698/sprite_walk.png",
+    "characters-general/character_878698/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:20:53.898642"
+}

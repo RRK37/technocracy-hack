@@ -1,0 +1,25 @@
+{
+  "character_id": "720455",
+  "name": "Aman Sah",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQHCRKle4XPwDQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1731439782192?e=1767225600&v=beta&t=tO1zp36xW4ixoueJ43R7d-Ld2RFjR9K3w8W2nHIIePs",
+  "extracted_features": {
+    "skin_color": "brown",
+    "hair_color": "black",
+    "hair_length": "short",
+    "shirt_color": "black",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_720455/sprite_idle.png",
+    "characters-general/character_720455/sprite_walk.png",
+    "characters-general/character_720455/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:21:00.152724"
+}

@@ -1,0 +1,24 @@
+{
+  "character_id": "490152",
+  "name": "Abdur Razzak",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQGLmo4NGFxWwQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1730368327415?e=1767225600&v=beta&t=f9xo9df3N24NrdIFL175BEa47bAWmBkWIBJLJMMym4s",
+  "extracted_features": {
+    "gender": "male",
+    "skin_color": "taupe",
+    "hair_color": "dark_brown",
+    "hair_length": "long",
+    "shirt_color": "gray",
+    "confidence": {
+      "skin": "medium",
+      "hair_color": "low",
+      "hair_length": "low",
+      "shirt": "medium"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_490152/sprite_idle.png",
+    "characters-general/character_490152/sprite_walk.png",
+    "characters-general/character_490152/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:21:06.026644"
+}

@@ -1,0 +1,25 @@
+{
+  "character_id": "129521",
+  "name": "Pravin Paratey",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4D03AQFGUlLfIsT98g/profile-displayphoto-scale_200_200/B4DZolt2y7GsAY-/0/1761569369775?e=1767225600&v=beta&t=FUb_vPFWY_Fk9oRXUPB6HL2xZYciBPDbJ4r458bsnrI",
+  "extracted_features": {
+    "skin_color": "brown",
+    "hair_color": "black",
+    "hair_length": "short",
+    "shirt_color": "navy",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_129521/sprite_idle.png",
+    "characters-general/character_129521/sprite_walk.png",
+    "characters-general/character_129521/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:21:12.352286"
+}

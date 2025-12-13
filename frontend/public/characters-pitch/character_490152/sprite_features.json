@@ -1,0 +1,21 @@
+{
+  "extracted_features": {
+    "gender": "male",
+    "skin_color": "taupe",
+    "hair_color": "dark_brown",
+    "hair_length": "long",
+    "shirt_color": "gray",
+    "confidence": {
+      "skin": "medium",
+      "hair_color": "low",
+      "hair_length": "low",
+      "shirt": "medium"
+    }
+  },
+  "selected_style": {
+    "gender": "male",
+    "hair_style": "curly_long"
+  },
+  "generated": "2025-12-13T19:21:06.026486",
+  "method": "OpenAI GPT-4 Vision API"
+}
