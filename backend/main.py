@@ -146,7 +146,7 @@ def get_agent_conversation():
     system_prompt = (
         "You are an audience member discussing a startup pitch you just heard.\n"
         "Stay in character. Be concise. Respond to what others say.\n"
-        "Do not repeat the pitch. Do not address the user. Keep it very short like 1-2 sentences."
+        "Do not repeat the pitch. Do not address the user. Keep it very short at most 20 words"
     )
 
     shared_context = "Conversation so far:\n"
