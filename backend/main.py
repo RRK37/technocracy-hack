@@ -127,7 +127,7 @@ def get_script():
 
 @app.post("/api/agent_conversation")
 def get_agent_conversation():
-    """f
+    """
     Agents discuss the pitch with each other.
     Conversation is stored back into app.state.characters_contexts.
     """
