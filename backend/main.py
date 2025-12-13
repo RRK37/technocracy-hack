@@ -74,7 +74,7 @@ def gpt(prompt):
             return "Good morning, Dawn Capital team. I'm Alex Carter, and I'm here to introduce QuickFix. As a former operations manager, I experienced firsthand how frustrating it is to find reliable help for small home repairs - a leaky tap, a broken switch, loose furniture. Most handymen don't want small jobs, and the ones who do are hard to find and unreliable. QuickFix solves this. Our mobile app connects homeowners with verified local handymen within 24 hours. Users post a job, see a fixed price upfront, and book instantly. No haggling, no waiting for quotes. Handymen get paid per job, and we take a small service fee. We've already onboarded 50 handymen in London and completed 200 jobs with a 4.8-star rating. The home services market is massive - over 400 billion globally - and we're targeting the underserved small repairs segment. We're seeking seed funding to expand to three more UK cities and build out our technology. I'd love to discuss how Dawn Capital can help us scale."
     
     response = client.responses.create(
-        model="gpt-5-nano",
+        model="gpt-3.5-turbo",
         input=prompt,
     )
     return response.output_text
@@ -109,7 +109,7 @@ def set_user_context(context: UserContext):
 def get_script_plan():
     """Returns the script plan of the pitch"""
     logger.info("Generating script plan...")
-    app.state.script_plan = gpt("Generate a plan for a pitch to vcs. keep it very short and concise, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown')
+    app.state.script_plan = gpt("Generate a plan for a pitch to vcs. keep it very short and concise, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown stay in character')
     logger.info(f"Script plan generated - Length: {len(app.state.script_plan)} chars")
     return app.state.script_plan
 
@@ -117,7 +117,7 @@ def get_script_plan():
 def get_script():
     """Returns the script of the pitch"""
     logger.info("Generating pitch script...")
-    app.state.pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just what he should say dont include slide info')
+    app.state.pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just what he should say dont include slide info, stay in character')
     logger.info(f"Pitch script generated - Length: {len(app.state.pitch)} chars")
 
     for i in app.state.characters_contexts:
