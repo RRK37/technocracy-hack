@@ -242,7 +242,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
           {worldMode === WorldMode.PITCH && onAdvancePitchStage && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">
-                Stage: {pitchStage === PitchStage.IDLE ? 'Ready' : pitchStage === PitchStage.PRESENTING ? 'Presenting' : 'Discussing'}
+                Stage: {pitchStage === PitchStage.IDLE ? 'Ready' : pitchStage === PitchStage.PRESENTING ? 'Presenting' : 'Agents are talking about you'}
               </span>
               <Button
                 variant="default"

@@ -117,7 +117,7 @@ def get_script_plan():
 def get_script():
     """Returns the script of the pitch"""
     logger.info("Generating pitch script...")
-    app.state.pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just the script')
+    app.state.pitch = gpt("Generate a script for a pitch to vcs, here is the users context: " + app.state.user_context[1] + " and here is the script plan: " + app.state.script_plan + '\n dont include any other information, just what he should say dont include slide info')
     logger.info(f"Pitch script generated - Length: {len(app.state.pitch)} chars")
 
     for i in app.state.characters_contexts:
