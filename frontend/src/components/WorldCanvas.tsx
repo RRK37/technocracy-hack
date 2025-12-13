@@ -26,11 +26,12 @@ interface WorldCanvasProps {
   showTrapCircles: boolean;
   modeConfig: ModeFeatures;
   speechBubble?: { text: string; x: number; y: number };
+  discussionBubbles?: Array<{ characterId: number; text: string; x: number; y: number }>;
 }
 
 export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
   function WorldCanvas(
-    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles, modeConfig, speechBubble },
+    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles, modeConfig, speechBubble, discussionBubbles = [] },
     ref
   ) {
     const internalRef = useRef<HTMLCanvasElement>(null);
@@ -83,6 +84,11 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
     useEffect(() => {
       speechBubbleRef.current = speechBubble;
     }, [speechBubble]);
+
+    const discussionBubblesRef = useRef(discussionBubbles);
+    useEffect(() => {
+      discussionBubblesRef.current = discussionBubbles;
+    }, [discussionBubbles]);
 
     // Convert screen coordinates to world coordinates
     const screenToWorld = (screenX: number, screenY: number) => {
@@ -451,6 +457,82 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
 
           // Draw text
           ctx.fillStyle = '#1a1a1a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          lines.forEach((line, i) => {
+            ctx.fillText(line, bubbleX, ry + padding + i * lineHeight);
+          });
+          ctx.textAlign = 'left';
+        }
+
+        // Draw discussion bubbles (smaller, different color)
+        const currentDiscussionBubbles = discussionBubblesRef.current;
+        for (const discBubble of currentDiscussionBubbles) {
+          const bubbleX = discBubble.x;
+          const bubbleY = discBubble.y - 100;
+          const padding = 16;
+          const maxWidth = 300;
+          const lineHeight = 22;
+
+          ctx.font = '16px Inter, system-ui, sans-serif';
+
+          // Word wrap text
+          const words = discBubble.text.split(' ');
+          const lines: string[] = [];
+          let currentLine = '';
+
+          for (const word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > maxWidth - padding * 2) {
+              if (currentLine) lines.push(currentLine);
+              currentLine = word;
+            } else {
+              currentLine = testLine;
+            }
+          }
+          if (currentLine) lines.push(currentLine);
+
+          const textHeight = lines.length * lineHeight;
+          const textWidth = Math.min(maxWidth, Math.max(...lines.map(l => ctx.measureText(l).width))) + padding * 2;
+
+          // Draw bubble background (light blue for discussion)
+          ctx.fillStyle = 'rgba(220, 240, 255, 0.95)';
+          ctx.strokeStyle = 'rgba(100, 150, 200, 0.6)';
+          ctx.lineWidth = 2;
+
+          const rx = bubbleX - textWidth / 2;
+          const ry = bubbleY - textHeight - padding * 2;
+          const rw = textWidth;
+          const rh = textHeight + padding * 2;
+          const radius = 8;
+
+          ctx.beginPath();
+          ctx.moveTo(rx + radius, ry);
+          ctx.lineTo(rx + rw - radius, ry);
+          ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+          ctx.lineTo(rx + rw, ry + rh - radius);
+          ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+          ctx.lineTo(rx + radius, ry + rh);
+          ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+          ctx.lineTo(rx, ry + radius);
+          ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Draw pointer triangle
+          ctx.beginPath();
+          ctx.moveTo(bubbleX - 8, ry + rh);
+          ctx.lineTo(bubbleX, ry + rh + 10);
+          ctx.lineTo(bubbleX + 8, ry + rh);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(220, 240, 255, 0.95)';
+          ctx.fill();
+          ctx.stroke();
+
+          // Draw text
+          ctx.fillStyle = '#1a3a5a';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'top';
           lines.forEach((line, i) => {
