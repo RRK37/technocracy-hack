@@ -11,10 +11,23 @@ import { useCharacterData } from '@/src/hooks/useCharacterData';
 import { useCamera } from '@/src/hooks/useCamera';
 import { useGameLoop } from '@/src/hooks/useGameLoop';
 import { SimulationCharacter } from '@/src/lib/character';
-import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG } from '@/src/lib/world';
+import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
-export function CharacterWorld() {
+// Context data from Pitch mode setup
+export interface PitchContext {
+  company: string;
+  agentIds: number[];
+  userId: number;
+}
+
+interface CharacterWorldProps {
+  initialMode?: WorldMode;
+  onBack?: () => void;
+  pitchContext?: PitchContext;
+}
+
+export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pitchContext }: CharacterWorldProps) {
   // Load character data
   const { characters: characterData, isLoading, isError } = useCharacterData();
 
@@ -40,9 +53,17 @@ export function CharacterWorld() {
   // Toggle for showing trap circles
   const [showTrapCircles, setShowTrapCircles] = useState(true);
 
-  // World mode state
-  const [worldMode, setWorldMode] = useState<WorldMode>(WorldMode.INTERACTIVE);
+  // World mode state (initialized from prop)
+  const [worldMode, setWorldMode] = useState<WorldMode>(initialMode);
   const modeConfig = MODE_CONFIG[worldMode];
+
+  // Discussion system state (for DISCUSS mode)
+  const discussionGroup = useRef<SimulationCharacter[]>([]);
+  const discussionEndTime = useRef<number>(0);
+  const lastDiscussionTime = useRef<number>(0);
+
+  // Pitch mode stage (for PITCH mode)
+  const [pitchStage, setPitchStage] = useState<PitchStage>(PitchStage.IDLE);
 
   // Add a new trap circle
   const addTrapCircle = useCallback((circle: TrapCircle) => {
@@ -145,9 +166,9 @@ export function CharacterWorld() {
     }
   }, [worldMode, modeConfig.audienceFormation, simulationCharacters]);
 
-  // SCRATCH mode: Waiting room - audience in top-left, Jordan on right
+  // DISCUSS mode: Waiting room - audience in top-left, Jordan on right
   useEffect(() => {
-    if (worldMode === WorldMode.SCRATCH && simulationCharacters.length > 0) {
+    if (worldMode === WorldMode.DISCUSS && simulationCharacters.length > 0) {
       // Reset all characters first
       simulationCharacters.forEach((char) => char.resetToWandering());
       setTrapCircles([]);
@@ -167,7 +188,7 @@ export function CharacterWorld() {
 
       // Create trap circle in top-left corner
       const trapCircle: TrapCircle = {
-        id: `scratch-trap-${Date.now()}`,
+        id: `discuss-trap-${Date.now()}`,
         x: centerX + 50, // Offset from edge
         y: centerY + 50,
         radius: radius,
@@ -192,6 +213,147 @@ export function CharacterWorld() {
       });
     }
   }, [worldMode, simulationCharacters]);
+
+  // SCRATCH mode: Reset to wandering (basic sandbox for new experiments)
+  useEffect(() => {
+    if (worldMode === WorldMode.SCRATCH && simulationCharacters.length > 0) {
+      // Reset all characters to wandering
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      // Clear all trap circles
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+    }
+  }, [worldMode, simulationCharacters]);
+
+  // PITCH mode: Reset to IDLE stage when entering
+  useEffect(() => {
+    if (worldMode === WorldMode.PITCH) {
+      setPitchStage(PitchStage.IDLE);
+      // Reset characters to wandering
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+      // Reset discussion state
+      discussionGroup.current = [];
+      discussionEndTime.current = 0;
+      lastDiscussionTime.current = 0;
+    }
+  }, [worldMode]);
+
+  // Handle pitch stage transitions
+  const advancePitchStage = useCallback(() => {
+    if (worldMode !== WorldMode.PITCH) return;
+
+    // End any active discussions
+    discussionGroup.current.forEach((char) => char.endDiscussion());
+    discussionGroup.current = [];
+
+    if (pitchStage === PitchStage.IDLE) {
+      // Start Pitching -> PRESENTING stage
+      setPitchStage(PitchStage.PRESENTING);
+
+      // Set up audience formation (same as PRESENTING mode)
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      setTrapCircles([]);
+
+      const presenter = simulationCharacters.find((char) =>
+        char.data.name.toLowerCase() === 'jordan'
+      ) || simulationCharacters[0];
+
+      const centerX = WORLD_CONFIG.WIDTH / 2;
+      const centerY = WORLD_CONFIG.HEIGHT / 2;
+      presenter.setAudiencePosition(centerX, centerY + 200, true);
+
+      const audience = simulationCharacters.filter((c) => c !== presenter);
+      const cols = Math.min(8, Math.ceil(Math.sqrt(audience.length * 1.5)));
+      const spacingX = 80;
+      const spacingY = 70;
+      const startY = centerY - 100;
+
+      audience.forEach((char, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const rowCharCount = Math.min(cols, audience.length - row * cols);
+        const rowStartX = centerX - ((rowCharCount - 1) * spacingX) / 2;
+        const x = rowStartX + col * spacingX;
+        const y = startY - row * spacingY;
+        char.setAudiencePosition(x, y, false);
+      });
+
+    } else if (pitchStage === PitchStage.PRESENTING) {
+      // Next -> DISCUSSING stage
+      setPitchStage(PitchStage.DISCUSSING);
+
+      // Set up discuss formation (same as DISCUSS mode)
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      setTrapCircles([]);
+
+      const presenter = simulationCharacters.find((char) =>
+        char.data.name.toLowerCase() === 'jordan'
+      ) || simulationCharacters[0];
+
+      const areaWidth = WORLD_CONFIG.WIDTH * 0.38;
+      const areaHeight = WORLD_CONFIG.HEIGHT * 0.38;
+      const centerX = areaWidth / 2;
+      const centerY = areaHeight / 2;
+      const radius = Math.min(areaWidth, areaHeight) / 2 - 50;
+
+      const trapCircle: TrapCircle = {
+        id: `pitch-trap-${Date.now()}`,
+        x: centerX + 50,
+        y: centerY + 50,
+        radius: radius,
+      };
+      setTrapCircles([trapCircle]);
+
+      const jordanX = WORLD_CONFIG.WIDTH * 0.8;
+      const jordanY = WORLD_CONFIG.HEIGHT / 2;
+      presenter.setAudiencePosition(jordanX, jordanY, true);
+
+      const audience = simulationCharacters.filter((c) => c !== presenter);
+      audience.forEach((char) => {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * (radius - 30);
+        const targetX = trapCircle.x + Math.cos(angle) * dist;
+        const targetY = trapCircle.y + Math.sin(angle) * dist;
+        char.setWalkTarget(targetX, targetY);
+      });
+
+      // Reset discussion timers
+      lastDiscussionTime.current = Date.now();
+
+    } else if (pitchStage === PitchStage.DISCUSSING) {
+      // Next -> back to PRESENTING stage
+      setPitchStage(PitchStage.PRESENTING);
+
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      setTrapCircles([]);
+
+      const presenter = simulationCharacters.find((char) =>
+        char.data.name.toLowerCase() === 'jordan'
+      ) || simulationCharacters[0];
+
+      const centerX = WORLD_CONFIG.WIDTH / 2;
+      const centerY = WORLD_CONFIG.HEIGHT / 2;
+      presenter.setAudiencePosition(centerX, centerY + 200, true);
+
+      const audience = simulationCharacters.filter((c) => c !== presenter);
+      const cols = Math.min(8, Math.ceil(Math.sqrt(audience.length * 1.5)));
+      const spacingX = 80;
+      const spacingY = 70;
+      const startY = centerY - 100;
+
+      audience.forEach((char, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const rowCharCount = Math.min(cols, audience.length - row * cols);
+        const rowStartX = centerX - ((rowCharCount - 1) * spacingX) / 2;
+        const x = rowStartX + col * spacingX;
+        const y = startY - row * spacingY;
+        char.setAudiencePosition(x, y, false);
+      });
+    }
+  }, [worldMode, pitchStage, simulationCharacters]);
 
   // Game loop - update all characters and check for interactions
   useGameLoop(
@@ -272,8 +434,51 @@ export function CharacterWorld() {
             }
           }
         } // end if modeConfig.interactions
+
+        // Auto-discussion system for DISCUSS mode and PITCH mode DISCUSSING stage
+        if (worldMode === WorldMode.DISCUSS || (worldMode === WorldMode.PITCH && pitchStage === PitchStage.DISCUSSING)) {
+          const now = Date.now();
+
+          // Check if current discussion has ended
+          if (discussionGroup.current.length > 0 && now >= discussionEndTime.current) {
+            // End current discussion
+            discussionGroup.current.forEach((char) => char.endDiscussion());
+            discussionGroup.current = [];
+            lastDiscussionTime.current = now;
+          }
+
+          // If no active discussion, maybe start one
+          if (discussionGroup.current.length === 0) {
+            const timeSinceLastDiscussion = now - lastDiscussionTime.current;
+            const cooldownPassed = timeSinceLastDiscussion > 2000; // 2 second cooldown
+
+            // Get wandering characters (excluding Jordan who is presenting)
+            const availableChars = simulationCharacters.filter(
+              (c) => c.state === CharacterState.WANDERING
+            );
+
+            // Random chance to start discussion (higher chance if cooldown just passed)
+            const chance = cooldownPassed ? 0.02 : 0; // 2% per frame after cooldown
+
+            if (availableChars.length >= 2 && Math.random() < chance) {
+              // Pick 2-4 random characters
+              const groupSize = Math.min(2 + Math.floor(Math.random() * 3), availableChars.length);
+              const shuffled = [...availableChars].sort(() => Math.random() - 0.5);
+              const group = shuffled.slice(0, groupSize);
+
+              // Calculate center point of the group
+              const centerX = group.reduce((sum, c) => sum + c.x, 0) / group.length;
+              const centerY = group.reduce((sum, c) => sum + c.y, 0) / group.length;
+
+              // Start discussion
+              group.forEach((char) => char.joinDiscussion(centerX, centerY));
+              discussionGroup.current = group;
+              discussionEndTime.current = now + 10000; // 10 seconds
+            }
+          }
+        }
       },
-      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions]
+      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, worldMode, pitchStage]
     ),
     simulationCharacters.length > 0
   );
@@ -370,6 +575,9 @@ export function CharacterWorld() {
         worldMode={worldMode}
         onSetWorldMode={setWorldMode}
         modeConfig={modeConfig}
+        pitchStage={pitchStage}
+        onAdvancePitchStage={advancePitchStage}
+        onBack={onBack}
       />
     </SidebarProvider>
   );

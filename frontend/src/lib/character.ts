@@ -86,6 +86,10 @@ export class SimulationCharacter {
   walkTargetX: number = 0;
   walkTargetY: number = 0;
 
+  // Discussion properties (for circle discussions)
+  discussionCenterX: number = 0;
+  discussionCenterY: number = 0;
+
   // Aura determines interaction radius (0-1, randomly assigned)
   aura: number;
 
@@ -215,8 +219,8 @@ export class SimulationCharacter {
    * Move the character and handle world boundaries
    */
   private move(trapCircles: TrapCircle[] = []): void {
-    // Don't move if sitting
-    if (this.state === CharacterState.SITTING) {
+    // Don't move if sitting or discussing
+    if (this.state === CharacterState.SITTING || this.state === CharacterState.DISCUSSING) {
       return;
     }
 
@@ -356,23 +360,30 @@ export class SimulationCharacter {
       const prevDy = (this.y - this.vy) - circle.y;
       const prevDistFromCenter = Math.sqrt(prevDx * prevDx + prevDy * prevDy);
 
-      // Was inside, trying to exit
+      // Was inside, trying to exit - push back inside
       if (prevDistFromCenter < circle.radius && distFromCenter >= circle.radius) {
-        // Push back inside and bounce
         const angle = Math.atan2(dy, dx);
-        this.x = circle.x + Math.cos(angle) * (circle.radius - 1);
-        this.y = circle.y + Math.sin(angle) * (circle.radius - 1);
+        this.x = circle.x + Math.cos(angle) * (circle.radius - 5);
+        this.y = circle.y + Math.sin(angle) * (circle.radius - 5);
         // Reverse velocity (bounce)
         this.vx *= -1;
         this.vy *= -1;
       }
-      // Was outside, trying to enter
+      // Was outside, trying to enter - push back outside (for user-created trap circles)
       else if (prevDistFromCenter > circle.radius && distFromCenter <= circle.radius) {
-        // Push back outside and bounce
         const angle = Math.atan2(dy, dx);
-        this.x = circle.x + Math.cos(angle) * (circle.radius + 1);
-        this.y = circle.y + Math.sin(angle) * (circle.radius + 1);
+        this.x = circle.x + Math.cos(angle) * (circle.radius + 5);
+        this.y = circle.y + Math.sin(angle) * (circle.radius + 5);
         // Reverse velocity (bounce)
+        this.vx *= -1;
+        this.vy *= -1;
+      }
+      // If character is inside circle, ensure they stay inside (continuous containment)
+      else if (prevDistFromCenter < circle.radius && distFromCenter >= circle.radius - 2) {
+        // Too close to edge while inside - push toward center
+        const angle = Math.atan2(dy, dx);
+        this.x = circle.x + Math.cos(angle) * (circle.radius - 10);
+        this.y = circle.y + Math.sin(angle) * (circle.radius - 10);
         this.vx *= -1;
         this.vy *= -1;
       }
@@ -656,6 +667,40 @@ export class SimulationCharacter {
   }
 
   /**
+   * Join a discussion circle - stop and face the center
+   */
+  joinDiscussion(centerX: number, centerY: number): void {
+    this.savedVx = this.vx;
+    this.savedVy = this.vy;
+    this.vx = 0;
+    this.vy = 0;
+    this.discussionCenterX = centerX;
+    this.discussionCenterY = centerY;
+    this.state = CharacterState.DISCUSSING;
+
+    // Face toward the center
+    const dx = centerX - this.x;
+    const dy = centerY - this.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      this.row = dx > 0 ? Direction.RIGHT : Direction.LEFT;
+    } else {
+      this.row = dy > 0 ? Direction.DOWN : Direction.UP;
+    }
+  }
+
+  /**
+   * End discussion and return to wandering
+   */
+  endDiscussion(): void {
+    if (this.state !== CharacterState.DISCUSSING) return;
+    this.state = CharacterState.WANDERING;
+    // Give a random velocity to start wandering
+    const angle = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(angle) * CHARACTER_CONFIG.SPEED;
+    this.vy = Math.sin(angle) * CHARACTER_CONFIG.SPEED;
+  }
+
+  /**
    * Check if this character can interact with others (not already busy)
    */
   canInteract(): boolean {
@@ -830,6 +875,18 @@ export class SimulationCharacter {
           ctx.drawImage(
             this.sitImage,
             sitCol * sitFrameW, sitRow * sitFrameH, sitFrameW, sitFrameH,
+            this.x - currentW / 2, this.y - currentH / 2, currentW, currentH
+          );
+        }
+      } else if (this.state === CharacterState.DISCUSSING) {
+        // Discussing: use idle sprite facing the discussion center
+        if (this.idleImageLoaded && this.idleImage) {
+          const idleFrameW = this.idleImage.width / 2;
+          const idleFrameH = this.idleImage.height / 4;
+          // Use current row (direction) set when joining discussion
+          ctx.drawImage(
+            this.idleImage,
+            0, this.row * idleFrameH, idleFrameW, idleFrameH,
             this.x - currentW / 2, this.y - currentH / 2, currentW, currentH
           );
         }

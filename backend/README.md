@@ -295,7 +295,7 @@ curl -X POST http://localhost:5037/api/question \
   -d '{"question": "Should we ban single-use plastics?"}'
 
 # 2. Start a conversation with characters who care most
-curl -X POST http://localhost:5037/api/conversation \
+curl -X POST http://localhost:5037/api/agent_conversation \
   -H "Content-Type: application/json" \
   -d '{"character_ids": [5, 12, 23, 67]}'
 

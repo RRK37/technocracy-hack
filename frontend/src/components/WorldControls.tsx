@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CharacterList } from '@/src/components/CharacterList';
 import type { Character } from '@/src/types/character';
-import { WorldMode, ModeFeatures } from '@/src/lib/world';
+import { WorldMode, ModeFeatures, PitchStage } from '@/src/lib/world';
 import {
   Conversation,
   ConversationContent,
@@ -68,9 +68,12 @@ interface WorldControlsProps {
   worldMode: WorldMode;
   onSetWorldMode: (mode: WorldMode) => void;
   modeConfig: ModeFeatures;
+  pitchStage?: PitchStage;
+  onAdvancePitchStage?: () => void;
+  onBack?: () => void;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -151,14 +154,27 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
       <Tabs defaultValue="chat" className="flex flex-col h-full">
         <SidebarHeader className="border-b border-sidebar-border px-4 py-3 bg-sidebar space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-normal text-sidebar-foreground">Technocracy</h2>
+            <div className="flex items-center gap-2">
+              {onBack && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4" />
+                </Button>
+              )}
+              <h2 className="text-sm font-normal text-sidebar-foreground">Technocracy</h2>
+            </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="size-3" />
               <span>{characters.length}</span>
             </div>
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">World Mode</span>
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground">World Mode</span>
+            {/* Row 1: Core modes */}
             <div className="flex gap-1">
               <Button
                 variant={worldMode === WorldMode.INTERACTIVE ? "default" : "outline"}
@@ -178,6 +194,9 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 <Eye className="size-3 mr-1" />
                 Observe
               </Button>
+            </div>
+            {/* Row 2: Special modes */}
+            <div className="flex gap-1">
               <Button
                 variant={worldMode === WorldMode.PRESENTING ? "default" : "outline"}
                 size="sm"
@@ -188,6 +207,15 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 Presenting
               </Button>
               <Button
+                variant={worldMode === WorldMode.DISCUSS ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.DISCUSS)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.DISCUSS ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-transparent'}`}
+              >
+                <MessageCircle className="size-3 mr-1" />
+                Discuss
+              </Button>
+              <Button
                 variant={worldMode === WorldMode.SCRATCH ? "default" : "outline"}
                 size="sm"
                 onClick={() => onSetWorldMode(WorldMode.SCRATCH)}
@@ -196,8 +224,37 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 <FlaskConical className="size-3 mr-1" />
                 Scratch
               </Button>
+              <Button
+                variant={worldMode === WorldMode.PITCH ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.PITCH)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.PITCH ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-transparent'}`}
+              >
+                <Rocket className="size-3 mr-1" />
+                Pitch
+              </Button>
             </div>
           </div>
+          {/* Pitch mode controls */}
+          {worldMode === WorldMode.PITCH && onAdvancePitchStage && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                Stage: {pitchStage === PitchStage.IDLE ? 'Ready' : pitchStage === PitchStage.PRESENTING ? 'Presenting' : 'Discussing'}
+              </span>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onAdvancePitchStage}
+                className="h-6 px-3 text-xs bg-red-600 hover:bg-red-700 text-white"
+              >
+                {pitchStage === PitchStage.IDLE ? (
+                  <><Play className="size-3 mr-1" /> Start Pitching</>
+                ) : (
+                  <><SkipForward className="size-3 mr-1" /> Next</>
+                )}
+              </Button>
+            </div>
+          )}
           {trapCircleCount > 0 && onClearTrapCircles && (
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1 text-muted-foreground">
