@@ -1,0 +1,86 @@
+{
+  "processed": 13,
+  "success": 13,
+  "failed": 0,
+  "skipped": 0,
+  "characters": {
+    "character_878698": {
+      "name": "Niels Andriesse",
+      "status": "success",
+      "directory": "characters-general/character_878698",
+      "sprites": 3
+    },
+    "character_048991": {
+      "name": "Abdussalam Popoola",
+      "status": "success",
+      "directory": "characters-general/character_048991",
+      "sprites": 3
+    },
+    "character_947153": {
+      "name": "Botir Khaltaev",
+      "status": "success",
+      "directory": "characters-general/character_947153",
+      "sprites": 3
+    },
+    "character_720455": {
+      "name": "Aman Sah",
+      "status": "success",
+      "directory": "characters-general/character_720455",
+      "sprites": 3
+    },
+    "character_197121": {
+      "name": "Rohith Raghunathan Nair",
+      "status": "success",
+      "directory": "characters-general/character_197121",
+      "sprites": 3
+    },
+    "character_953724": {
+      "name": "Farhan Shaikh",
+      "status": "success",
+      "directory": "characters-general/character_953724",
+      "sprites": 3
+    },
+    "character_490152": {
+      "name": "Abdur Razzak",
+      "status": "success",
+      "directory": "characters-general/character_490152",
+      "sprites": 3
+    },
+    "character_249825": {
+      "name": "Leonardo O.",
+      "status": "success",
+      "directory": "characters-general/character_249825",
+      "sprites": 3
+    },
+    "character_100680": {
+      "name": "Luka Dadiani",
+      "status": "success",
+      "directory": "characters-general/character_100680",
+      "sprites": 3
+    },
+    "character_129521": {
+      "name": "Pravin Paratey",
+      "status": "success",
+      "directory": "characters-general/character_129521",
+      "sprites": 3
+    },
+    "character_227243": {
+      "name": "Henry Allen",
+      "status": "success",
+      "directory": "characters-general/character_227243",
+      "sprites": 3
+    },
+    "character_018513": {
+      "name": "Mo Elkhidir",
+      "status": "success",
+      "directory": "characters-general/character_018513",
+      "sprites": 3
+    },
+    "character_637094": {
+      "name": "David Gelberg",
+      "status": "success",
+      "directory": "characters-general/character_637094",
+      "sprites": 3
+    }
+  }
+}

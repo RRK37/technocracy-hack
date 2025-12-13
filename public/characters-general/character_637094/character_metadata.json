@@ -1,0 +1,25 @@
+{
+  "character_id": "637094",
+  "name": "David Gelberg",
+  "photo_url": "https://media.licdn.com/dms/image/v2/C5603AQGL4dq7JqHwrA/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1577458350906?e=1767225600&v=beta&t=OXhtkB3zF3S33mZR4p-QuqEiDDePlD0uJ3c3gm7tGsU",
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "light_brown",
+    "hair_length": "medium",
+    "shirt_color": "gray",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_637094/sprite_idle.png",
+    "characters-general/character_637094/sprite_walk.png",
+    "characters-general/character_637094/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:21:17.900756"
+}

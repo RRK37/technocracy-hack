@@ -1,0 +1,25 @@
+{
+  "character_id": "018513",
+  "name": "Mo Elkhidir",
+  "photo_url": "https://media.licdn.com/dms/image/v2/C4E03AQG_cikh16Ofmg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1602750930201?e=1767225600&v=beta&t=3F9xX3h5Z7qWEmKAbUilEi66dyurk_baede1p_BiO1o",
+  "extracted_features": {
+    "skin_color": "brown",
+    "hair_color": "black",
+    "hair_length": "short",
+    "shirt_color": "black",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_018513/sprite_idle.png",
+    "characters-general/character_018513/sprite_walk.png",
+    "characters-general/character_018513/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:21:16.190443"
+}

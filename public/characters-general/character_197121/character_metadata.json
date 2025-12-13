@@ -1,0 +1,25 @@
+{
+  "character_id": "197121",
+  "name": "Rohith Raghunathan Nair",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQHZGyVrw90Qsg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1706553431652?e=1767225600&v=beta&t=NXdjasilW8h_q-BfIcg31yMfWz8fdoKDXe-FCcQ3uHk",
+  "extracted_features": {
+    "skin_color": "brown",
+    "hair_color": "black",
+    "hair_length": "short",
+    "shirt_color": "black",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-general/character_197121/sprite_idle.png",
+    "characters-general/character_197121/sprite_walk.png",
+    "characters-general/character_197121/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T19:21:02.213890"
+}
