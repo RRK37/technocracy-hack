@@ -109,7 +109,7 @@ def set_user_context(context: UserContext):
 def get_script_plan():
     """Returns the script plan of the pitch"""
     logger.info("Generating script plan...")
-    app.state.script_plan = gpt("Generate a plan for a pitch to vcs, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown')
+    app.state.script_plan = gpt("Generate a plan for a pitch to vcs. keep it very short and concise, here is the users context: " + app.state.user_context[1] + '\n dont include any other information, just the plan, in raw text, not markdown')
     logger.info(f"Script plan generated - Length: {len(app.state.script_plan)} chars")
     return app.state.script_plan
 
