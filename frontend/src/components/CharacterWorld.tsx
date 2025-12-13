@@ -76,6 +76,12 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
   const presenterRef = useRef<SimulationCharacter | null>(null);
   const positionCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Discussion speech bubbles state (for DISCUSSING stage)
+  const [discussionBubbles, setDiscussionBubbles] = useState<Array<{ characterId: number; text: string; x: number; y: number }>>([]);
+  const discussionConversationRef = useRef<Array<{ agentId: string; message: string }>>([]);
+  const discussionMessageIndexRef = useRef(0);
+  const discussionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Add a new trap circle
   const addTrapCircle = useCallback((circle: TrapCircle) => {
     setTrapCircles((prev) => [...prev, circle]);
@@ -458,6 +464,96 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       // Reset discussion timers
       lastDiscussionTime.current = Date.now();
 
+      // Clear previous discussion bubbles
+      setDiscussionBubbles([]);
+      discussionMessageIndexRef.current = 0;
+      if (discussionIntervalRef.current) {
+        clearInterval(discussionIntervalRef.current);
+      }
+
+      // Fetch agent conversation
+      fetch('http://localhost:8000/api/agent_conversation', { method: 'POST' })
+        .then((res) => res.json())
+        .then((conversation: Array<Record<string, string>>) => {
+          // Parse conversation into array of {agentId, message}
+          const parsed = conversation.map((item) => {
+            const agentId = Object.keys(item)[0];
+            return { agentId, message: item[agentId] };
+          });
+          discussionConversationRef.current = parsed;
+
+          // Animate discussion bubbles
+          if (parsed.length > 0) {
+            const showNextMessage = () => {
+              const idx = discussionMessageIndexRef.current;
+              if (idx >= parsed.length) {
+                discussionMessageIndexRef.current = 0; // Loop or stop
+                setDiscussionBubbles([]);
+                return;
+              }
+
+              const msg = parsed[idx];
+              // Find character by matching agent ID (e.g., "agent_003" -> id 3)
+              const charIdMatch = msg.agentId.match(/\d+/);
+              const charId = charIdMatch ? parseInt(charIdMatch[0], 10) : 1;
+              const char = simulationCharacters.find((c) => c.data.id === charId) || audience[idx % audience.length];
+
+              if (char) {
+                setDiscussionBubbles([{
+                  characterId: char.data.id,
+                  text: msg.message,
+                  x: char.x,
+                  y: char.y,
+                }]);
+              }
+
+              discussionMessageIndexRef.current = idx + 1;
+            };
+
+            showNextMessage();
+            discussionIntervalRef.current = setInterval(showNextMessage, 4000);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch agent conversation, using dummy:', err);
+          // Dummy fallback
+          const dummyConversation = [
+            { agentId: 'agent_001', message: "That pitch was really compelling!" },
+            { agentId: 'agent_002', message: "I agree, the market opportunity is huge." },
+            { agentId: 'agent_003', message: "But what about the competition?" },
+            { agentId: 'agent_001', message: "Good point, we should ask about that." },
+          ];
+          discussionConversationRef.current = dummyConversation;
+
+          const showNextMessage = () => {
+            const idx = discussionMessageIndexRef.current;
+            if (idx >= dummyConversation.length) {
+              discussionMessageIndexRef.current = 0;
+              setDiscussionBubbles([]);
+              return;
+            }
+
+            const msg = dummyConversation[idx];
+            const charIdMatch = msg.agentId.match(/\d+/);
+            const charId = charIdMatch ? parseInt(charIdMatch[0], 10) : 1;
+            const char = simulationCharacters.find((c) => c.data.id === charId) || audience[idx % audience.length];
+
+            if (char) {
+              setDiscussionBubbles([{
+                characterId: char.data.id,
+                text: msg.message,
+                x: char.x,
+                y: char.y,
+              }]);
+            }
+
+            discussionMessageIndexRef.current = idx + 1;
+          };
+
+          showNextMessage();
+          discussionIntervalRef.current = setInterval(showNextMessage, 4000);
+        });
+
     } else if (pitchStage === PitchStage.DISCUSSING) {
       // Next -> back to PRESENTING stage
       setPitchStage(PitchStage.PRESENTING);
@@ -701,6 +797,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
               x: presenterRef.current.x,
               y: presenterRef.current.y,
             } : undefined}
+            discussionBubbles={discussionBubbles}
           />
         </div>
       </SidebarInset>
