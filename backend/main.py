@@ -25,14 +25,14 @@ def set_context(context: Context):
     return [i for i in range(1, 21)]
 
 # ---- Routes ----
-@app.post("/api/userContext")
+@app.post("/api/user_context")
 def set_user_context(context: UserContext):
     """Returns the id of the user agent"""
     app.state.user_context = context
     return 56
 
-@app.post("/api/get_transcript")
-def get_pitch():
+@app.post("/api/transcript")
+def get_transcript():
     """Returns the transcript of the pitch"""
     return [{
         "user": "Today I want to pitch my idea for a new company about xyz",
@@ -42,6 +42,19 @@ def get_pitch():
         "user": "Thank you",
     }, {
         "agent_003": "You're welcome",
+    }]
+
+@app.post("/api/agent_conversation")
+def get_agent_conversation():
+    """Returns the transcript of the pitch"""
+    return [{
+        "agent_003": "Today I want to pitch my idea for a new company about xyz",
+    }, {
+        "agent_004": "I think it's a good idea",
+    }, {
+        "agent_003": "Thank you",
+    }, {
+        "agent_004": "You're welcome",
     }]
 
 @app.get("/", include_in_schema=False)
