@@ -39,5 +39,10 @@
     "name": "Skye Fletcher",
     "id": "0008",
     "persona": "Venture capital investor at Dawn Capital focused on B2B software and fintech. Former Bain & Company consultant with experience in commercial due diligence and value creation. Strong engineering background from Cambridge, combining analytical rigor with early-stage investing."
+  },
+  "character_0009": {
+    "name": "Jordan",
+    "id": "0009",
+    "persona": "The presenter. A passionate entrepreneur pitching their startup idea to the VCs."
   }
 }

@@ -51,25 +51,27 @@ def format_char_id(char_id):
 def gpt(prompt):
     """Call GPT or return dummy response if no API key"""
     if client is None:
-        # Dummy response for testing without API key
+        # Dummy response for testing without API key - QuickFix pitch to Dawn Capital
         if "generate a plan" in prompt.lower():
-            return "1. Introduce yourself and your background. 2. Present the problem you are solving. 3. Explain your unique solution. 4. Show market opportunity and traction. 5. Ask for investment."
+            return "1. Introduce myself as Alex Carter, former operations manager. 2. Present the pain point: finding reliable handymen for small repairs is frustrating and slow. 3. Introduce QuickFix: a mobile app connecting users with verified handymen within 24 hours. 4. Explain the business model: fixed pricing, instant booking, per-job payments with service fee. 5. Show early traction and market opportunity. 6. Ask Dawn Capital for seed investment to scale."
         elif "audience member" in prompt.lower() or "discussing" in prompt.lower():
-            # Random short discussion responses for agent conversation
+            # Random short discussion responses for Dawn Capital VCs discussing QuickFix
             responses = [
-                "That's an interesting point about the market size.",
-                "I think the technology stack sounds solid.",
-                "What about the competitive landscape though?",
-                "The traction numbers are impressive.",
-                "I'd want to see more details on unit economics.",
-                "The team seems experienced in this space.",
-                "How do they plan to scale internationally?",
-                "The revenue model makes sense to me.",
+                "The 24-hour turnaround is a strong differentiator in the home services space.",
+                "I like the fixed pricing model - it removes friction for the consumer.",
+                "What's the handyman verification process? That's critical for trust.",
+                "The unit economics on small jobs are tricky. What's the average job size?",
+                "How do they handle quality control and customer complaints?",
+                "The operations background is relevant here - he understands the logistics.",
+                "TaskRabbit and Thumbtack are competitors. What's the moat?",
+                "The service fee model is proven. What percentage are they taking?",
+                "Urban density matters for this. Which cities are they targeting first?",
+                "Customer acquisition cost in home services is high. What's their strategy?",
             ]
             import random
             return random.choice(responses)
         else:
-            return "Good morning everyone, thank you for having me today. I'm excited to share my vision for revolutionizing the industry. The problem we're solving affects millions of people daily. Our solution is elegant and scalable. We've already seen incredible traction with early users. We're seeking investment to accelerate growth. I'd love to answer any questions you have."
+            return "Good morning, Dawn Capital team. I'm Alex Carter, and I'm here to introduce QuickFix. As a former operations manager, I experienced firsthand how frustrating it is to find reliable help for small home repairs - a leaky tap, a broken switch, loose furniture. Most handymen don't want small jobs, and the ones who do are hard to find and unreliable. QuickFix solves this. Our mobile app connects homeowners with verified local handymen within 24 hours. Users post a job, see a fixed price upfront, and book instantly. No haggling, no waiting for quotes. Handymen get paid per job, and we take a small service fee. We've already onboarded 50 handymen in London and completed 200 jobs with a 4.8-star rating. The home services market is massive - over 400 billion globally - and we're targeting the underserved small repairs segment. We're seeking seed funding to expand to three more UK cities and build out our technology. I'd love to discuss how Dawn Capital can help us scale."
     
     response = client.responses.create(
         model="gpt-5-nano",
@@ -183,7 +185,7 @@ def get_agent_conversation():
                 + "\n"
             )
 
-        updated_contexts.append((agent_id, agent_context))
+        updated_contexts.append([agent_id, agent_context])
 
     app.state.characters_contexts = updated_contexts
     logger.info(f"Conversation complete - {len(conversation)} total messages, {ROUNDS} rounds")
