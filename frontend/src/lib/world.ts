@@ -60,6 +60,7 @@ export enum CharacterState {
   AUDIENCE = 'AUDIENCE',       // Sitting in audience formation
   PRESENTING = 'PRESENTING',   // Standing at front as presenter
   WALKING_TO_AREA = 'WALKING_TO_AREA', // Walking to a target then wandering
+  DISCUSSING = 'DISCUSSING',   // In a discussion circle, facing center
 }
 
 // World modes
@@ -67,6 +68,7 @@ export enum WorldMode {
   INTERACTIVE = 'interactive',  // Full interaction dynamics: trap circles, character interactions
   OBSERVE = 'observe',          // Just wandering characters, no interactions
   PRESENTING = 'presenting',    // Audience formation with presenter at front
+  DISCUSS = 'discuss',          // Waiting room: audience in top-left, presenter on right
   SCRATCH = 'scratch',          // Sandbox mode for experimenting with new features
 }
 
@@ -102,6 +104,14 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: false,
     sitting: false,
     audienceFormation: true,
+  },
+  [WorldMode.DISCUSS]: {
+    // Waiting room: audience in trap circle (hidden), presenter stands on right
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: false,
   },
   [WorldMode.SCRATCH]: {
     // Sandbox mode - starts with OBSERVE defaults

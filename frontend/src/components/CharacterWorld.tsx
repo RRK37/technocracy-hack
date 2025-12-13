@@ -44,6 +44,11 @@ export function CharacterWorld() {
   const [worldMode, setWorldMode] = useState<WorldMode>(WorldMode.INTERACTIVE);
   const modeConfig = MODE_CONFIG[worldMode];
 
+  // Discussion system state (for DISCUSS mode)
+  const discussionGroup = useRef<SimulationCharacter[]>([]);
+  const discussionEndTime = useRef<number>(0);
+  const lastDiscussionTime = useRef<number>(0);
+
   // Add a new trap circle
   const addTrapCircle = useCallback((circle: TrapCircle) => {
     setTrapCircles((prev) => [...prev, circle]);
@@ -145,9 +150,9 @@ export function CharacterWorld() {
     }
   }, [worldMode, modeConfig.audienceFormation, simulationCharacters]);
 
-  // SCRATCH mode: Waiting room - audience in top-left, Jordan on right
+  // DISCUSS mode: Waiting room - audience in top-left, Jordan on right
   useEffect(() => {
-    if (worldMode === WorldMode.SCRATCH && simulationCharacters.length > 0) {
+    if (worldMode === WorldMode.DISCUSS && simulationCharacters.length > 0) {
       // Reset all characters first
       simulationCharacters.forEach((char) => char.resetToWandering());
       setTrapCircles([]);
@@ -167,7 +172,7 @@ export function CharacterWorld() {
 
       // Create trap circle in top-left corner
       const trapCircle: TrapCircle = {
-        id: `scratch-trap-${Date.now()}`,
+        id: `discuss-trap-${Date.now()}`,
         x: centerX + 50, // Offset from edge
         y: centerY + 50,
         radius: radius,
@@ -190,6 +195,17 @@ export function CharacterWorld() {
         // Set walk target (will walk there then start wandering)
         char.setWalkTarget(targetX, targetY);
       });
+    }
+  }, [worldMode, simulationCharacters]);
+
+  // SCRATCH mode: Reset to wandering (basic sandbox for new experiments)
+  useEffect(() => {
+    if (worldMode === WorldMode.SCRATCH && simulationCharacters.length > 0) {
+      // Reset all characters to wandering
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      // Clear all trap circles
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
     }
   }, [worldMode, simulationCharacters]);
 
@@ -272,8 +288,51 @@ export function CharacterWorld() {
             }
           }
         } // end if modeConfig.interactions
+
+        // Auto-discussion system for DISCUSS mode
+        if (worldMode === WorldMode.DISCUSS) {
+          const now = Date.now();
+
+          // Check if current discussion has ended
+          if (discussionGroup.current.length > 0 && now >= discussionEndTime.current) {
+            // End current discussion
+            discussionGroup.current.forEach((char) => char.endDiscussion());
+            discussionGroup.current = [];
+            lastDiscussionTime.current = now;
+          }
+
+          // If no active discussion, maybe start one
+          if (discussionGroup.current.length === 0) {
+            const timeSinceLastDiscussion = now - lastDiscussionTime.current;
+            const cooldownPassed = timeSinceLastDiscussion > 2000; // 2 second cooldown
+
+            // Get wandering characters (excluding Jordan who is presenting)
+            const availableChars = simulationCharacters.filter(
+              (c) => c.state === CharacterState.WANDERING
+            );
+
+            // Random chance to start discussion (higher chance if cooldown just passed)
+            const chance = cooldownPassed ? 0.02 : 0; // 2% per frame after cooldown
+
+            if (availableChars.length >= 2 && Math.random() < chance) {
+              // Pick 2-4 random characters
+              const groupSize = Math.min(2 + Math.floor(Math.random() * 3), availableChars.length);
+              const shuffled = [...availableChars].sort(() => Math.random() - 0.5);
+              const group = shuffled.slice(0, groupSize);
+
+              // Calculate center point of the group
+              const centerX = group.reduce((sum, c) => sum + c.x, 0) / group.length;
+              const centerY = group.reduce((sum, c) => sum + c.y, 0) / group.length;
+
+              // Start discussion
+              group.forEach((char) => char.joinDiscussion(centerX, centerY));
+              discussionGroup.current = group;
+              discussionEndTime.current = now + 10000; // 10 seconds
+            }
+          }
+        }
       },
-      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions]
+      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, worldMode]
     ),
     simulationCharacters.length > 0
   );

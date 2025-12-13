@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -157,8 +157,9 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               <span>{characters.length}</span>
             </div>
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">World Mode</span>
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground">World Mode</span>
+            {/* Row 1: Core modes */}
             <div className="flex gap-1">
               <Button
                 variant={worldMode === WorldMode.INTERACTIVE ? "default" : "outline"}
@@ -178,6 +179,9 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 <Eye className="size-3 mr-1" />
                 Observe
               </Button>
+            </div>
+            {/* Row 2: Special modes */}
+            <div className="flex gap-1">
               <Button
                 variant={worldMode === WorldMode.PRESENTING ? "default" : "outline"}
                 size="sm"
@@ -186,6 +190,15 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               >
                 <Presentation className="size-3 mr-1" />
                 Presenting
+              </Button>
+              <Button
+                variant={worldMode === WorldMode.DISCUSS ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.DISCUSS)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.DISCUSS ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-transparent'}`}
+              >
+                <MessageCircle className="size-3 mr-1" />
+                Discuss
               </Button>
               <Button
                 variant={worldMode === WorldMode.SCRATCH ? "default" : "outline"}
