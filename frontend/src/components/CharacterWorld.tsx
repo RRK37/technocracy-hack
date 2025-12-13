@@ -76,8 +76,8 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
   const presenterRef = useRef<SimulationCharacter | null>(null);
   const positionCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Discussion speech bubbles state (for DISCUSSING stage)
-  const [discussionBubbles, setDiscussionBubbles] = useState<Array<{ characterId: number; text: string; x: number; y: number }>>([]);
+  // Discussion speech bubbles state (for DISCUSSING stage) - stores characterId to look up position dynamically
+  const [discussionBubbles, setDiscussionBubbles] = useState<Array<{ characterId: number; text: string }>>([]);
   const discussionConversationRef = useRef<Array<{ agentId: number; message: string }>>([]);
   const discussionMessageIndexRef = useRef(0);
   const discussionIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -506,8 +506,6 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
                 setDiscussionBubbles([{
                   characterId: char.data.id,
                   text: msg.message,
-                  x: char.x,
-                  y: char.y,
                 }]);
               }
 
@@ -544,8 +542,6 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
               setDiscussionBubbles([{
                 characterId: char.data.id,
                 text: msg.message,
-                x: char.x,
-                y: char.y,
               }]);
             }
 

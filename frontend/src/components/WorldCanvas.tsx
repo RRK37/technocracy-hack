@@ -26,7 +26,7 @@ interface WorldCanvasProps {
   showTrapCircles: boolean;
   modeConfig: ModeFeatures;
   speechBubble?: { text: string; x: number; y: number };
-  discussionBubbles?: Array<{ characterId: number; text: string; x: number; y: number }>;
+  discussionBubbles?: Array<{ characterId: number; text: string }>;
 }
 
 export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
@@ -467,9 +467,14 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
 
         // Draw discussion bubbles (smaller, different color)
         const currentDiscussionBubbles = discussionBubblesRef.current;
+        const allCharactersForBubbles = charactersRef.current;
         for (const discBubble of currentDiscussionBubbles) {
-          const bubbleX = discBubble.x;
-          const bubbleY = discBubble.y - 100;
+          // Look up character position dynamically
+          const character = allCharactersForBubbles.find(c => c.data.id === discBubble.characterId);
+          if (!character) continue;
+
+          const bubbleX = character.x;
+          const bubbleY = character.y - 100;
           const padding = 16;
           const maxWidth = 300;
           const lineHeight = 22;
