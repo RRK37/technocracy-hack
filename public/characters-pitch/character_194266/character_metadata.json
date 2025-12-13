@@ -1,0 +1,25 @@
+{
+  "character_id": "194266",
+  "name": "Haakon Overli",
+  "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQFw8nbqJu35bA/profile-displayphoto-scale_200_200/B4EZkPY7MmGoAc-/0/1756899816971?e=1767225600&v=beta&t=fyABi8fzgLfi57z3SRQiH9h6JGENhGuQo-S2EX35zpc",
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "light_brown",
+    "hair_length": "medium",
+    "shirt_color": "gray",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-pitch/character_194266/sprite_idle.png",
+    "characters-pitch/character_194266/sprite_walk.png",
+    "characters-pitch/character_194266/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T17:39:14.972972"
+}

@@ -1,0 +1,25 @@
+{
+  "character_id": "135817",
+  "name": "Rom\u00e9o Walter",
+  "photo_url": "https://media.licdn.com/dms/image/v2/C4D03AQEuoKwFSuK91g/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1631526637123?e=1767225600&v=beta&t=rMuU53KVH9Rf8gFD5yTSpAQylkMJsnQAl--Rv1X56Rg",
+  "extracted_features": {
+    "skin_color": "light",
+    "hair_color": "dark_brown",
+    "hair_length": "short",
+    "shirt_color": "blue",
+    "gender": "male",
+    "confidence": {
+      "gender": "high",
+      "skin": "high",
+      "hair_color": "high",
+      "hair_length": "high",
+      "shirt": "high"
+    }
+  },
+  "generated_files": [
+    "characters-pitch/character_135817/sprite_idle.png",
+    "characters-pitch/character_135817/sprite_walk.png",
+    "characters-pitch/character_135817/sprite_sit.png"
+  ],
+  "processed_at": "2025-12-13T17:38:59.332137"
+}
