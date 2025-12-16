@@ -24,10 +24,16 @@ dotenv.load_dotenv()
 # CONFIGURATION
 # ============================================
 
-CHARACTERS_PATH = Path(__file__).parent.parent / "public" / "all-characters.json"
+# Character data sources (in priority order)
+CHARACTERS_PITCH_PATH = Path(__file__).parent.parent / "public" / "all-characters-pitch.json"
+CHARACTERS_GENERAL_PATH = Path(__file__).parent.parent / "public" / "all-characters-general.json"
+CHARACTERS_FALLBACK_PATH = Path(__file__).parent.parent / "public" / "all-characters.json"
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 TOTAL_CHARACTERS = 20
 MAX_WORKERS = 500
+
+# Cache for loaded character data to avoid repeated file reads
+_characters_cache = None
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -72,25 +78,89 @@ def load_prompts():
 # CHARACTER DATA ACCESS
 # ============================================
 
+def load_all_characters():
+    """
+    Load all characters from pitch, general, and fallback JSON files.
+    Creates a unified dict mapping character IDs to character info.
+    
+    Returns:
+        dict: {1: {'name': str, 'persona': str}, 2: {...}, ...}
+    """
+    global _characters_cache
+    
+    if _characters_cache is not None:
+        return _characters_cache
+    
+    characters = {}
+    next_id = 1
+    
+    # Load from pitch file (priority 1) - gets IDs 1-8
+    try:
+        with open(CHARACTERS_PITCH_PATH, 'r', encoding='utf-8') as f:
+            pitch_data = json.load(f)
+            for key in sorted([k for k in pitch_data.keys() if k.startswith('character_')]):
+                char = pitch_data[key]
+                if 'name' in char and 'persona' in char:
+                    characters[next_id] = {
+                        'name': char['name'],
+                        'persona': char['persona']
+                    }
+                    next_id += 1
+        print(f"Loaded {len(characters)} characters from pitch JSON")
+    except Exception as e:
+        print(f"Warning: Could not load pitch characters: {e}")
+    
+    # Load from general file (priority 2) - gets subsequent IDs
+    try:
+        with open(CHARACTERS_GENERAL_PATH, 'r', encoding='utf-8') as f:
+            general_data = json.load(f)
+            for key in sorted([k for k in general_data.keys() if k.startswith('character_')]):
+                char = general_data[key]
+                if 'name' in char and 'persona' in char:
+                    characters[next_id] = {
+                        'name': char['name'],
+                        'persona': char['persona']
+                    }
+                    next_id += 1
+        print(f"Total characters after general JSON: {len(characters)}")
+    except Exception as e:
+        print(f"Warning: Could not load general characters: {e}")
+    
+    # Load from fallback file (priority 3) - only if we need more characters
+    try:
+        with open(CHARACTERS_FALLBACK_PATH, 'r', encoding='utf-8') as f:
+            fallback_data = json.load(f)
+            if 'characters' in fallback_data:
+                for key, char in fallback_data['characters'].items():
+                    if key.startswith('character_'):
+                        char_id = int(key.split('_')[1])
+                        # Only add if not already loaded
+                        if char_id not in characters:
+                            # Fallback file might not have persona, only description
+                            persona = char.get('persona', char.get('description', ''))
+                            name = char.get('name', f"Character {char_id}")
+                            characters[char_id] = {
+                                'name': name,
+                                'persona': persona
+                            }
+        print(f"Total characters after fallback JSON: {len(characters)}")
+    except Exception as e:
+        print(f"Warning: Could not load fallback characters: {e}")
+    
+    _characters_cache = characters
+    return characters
+
 def get_character_info(char_id):
     """
-    Get character name and persona from all-characters.json
+    Get character name and persona by ID.
+    Loads from all-characters-pitch.json, then all-characters-general.json,
+    then falls back to all-characters.json.
     
     Returns:
         dict: {'name': str, 'persona': str} or None if not found
     """
-    char_key = f"character_{format_char_id(char_id)}"
-    
-    with open(CHARACTERS_PATH, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    if char_key in data["characters"]:
-        character = data["characters"][char_key]
-        return {
-            'name': character.get('name', ''),
-            'persona': character.get('persona', '')
-        }
-    return None
+    characters = load_all_characters()
+    return characters.get(char_id, None)
 
     ##############################################
     # REDIS CACHE OPERATIONS
@@ -145,7 +215,16 @@ def update_character_data(char_id, **kwargs):
 def get_all_characters_data():
     """Get all character data from Redis, sorted by ID"""
     keys = redis_client.keys('character:*')
-    characters = [get_character_data(int(key.split(':')[1])) for key in keys]
+    characters = []
+    for key in keys:
+        char_id = int(key.split(':')[1])
+        char_data = get_character_data(char_id)
+        if char_data:
+            # Add character name from character info
+            char_info = get_character_info(char_id)
+            if char_info:
+                char_data['name'] = char_info['name']
+            characters.append(char_data)
     return sorted([c for c in characters if c], key=lambda x: x['id'])
 
 def clear_all_characters():
@@ -936,13 +1015,9 @@ def handle_conversation():
         })
         last_speaker_id = current_speaker['id']
         
-        # Continue conversation with subsequent speakers
+        # Continue conversation with subsequent speakers (4 total comments)
         comment_count = 1
-        while True:
-            # After first 3 comments, 35% chance to end
-            if comment_count >= 3 and random.random() < 0.35:
-                break
-            
+        while comment_count < 4:
             # Append latest comment to all participants' chats (temporary for this conversation)
             for char_id in character_ids:
                 current_chat = get_character_data(char_id)['chat']
@@ -1158,12 +1233,21 @@ def init_server():
         print("  Start: redis-server")
         sys.exit(1)
     
-    print(f"\nInitializing {TOTAL_CHARACTERS} characters in Redis cache...")
+    # Load character data to show available count
+    print("\nLoading character data from JSON files...")
+    characters = load_all_characters()
+    available_chars = len(characters)
+    print(f"✓ Found {available_chars} characters with personas")
+    
+    # Use the minimum of TOTAL_CHARACTERS or available characters
+    chars_to_init = min(TOTAL_CHARACTERS, available_chars)
+    print(f"\nInitializing {chars_to_init} characters in Redis cache...")
     clear_all_characters()
     set_global_question('')
     
-    for i in range(1, TOTAL_CHARACTERS + 1):
-        init_character_cache(i)
+    for i in range(1, chars_to_init + 1):
+        if i in characters:
+            init_character_cache(i)
     
     print(f"✓ Initialized {len(get_all_characters_data())} characters")
     print("\nStarting Flask server on http://localhost:5037")
