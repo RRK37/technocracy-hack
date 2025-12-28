@@ -11,7 +11,8 @@ import { useCharacterData } from '@/src/hooks/useCharacterData';
 import { useCamera } from '@/src/hooks/useCamera';
 import { useGameLoop } from '@/src/hooks/useGameLoop';
 import { SimulationCharacter } from '@/src/lib/character';
-import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
+import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CONVERSING_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
+import { InteractionGraph } from '@/src/lib/interactionGraph';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 // Context data from Pitch mode setup
@@ -81,6 +82,9 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
   const discussionConversationRef = useRef<Array<{ agentId: number; message: string }>>([]);
   const discussionMessageIndexRef = useRef(0);
   const discussionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Interaction graph for abstract layer visualization (tracks conversation history)
+  const interactionGraphRef = useRef(new InteractionGraph());
 
   // Add a new trap circle
   const addTrapCircle = useCallback((circle: TrapCircle) => {
@@ -725,8 +729,51 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
             }
           }
         }
+
+        // Conversing system for ABSTRACT_LAYERS mode (lightweight talking while moving)
+        if (modeConfig.conversing) {
+          const now = Date.now();
+
+          // Track ongoing conversations for the interaction graph
+          for (const char of simulationCharacters) {
+            if (char.state === CharacterState.CONVERSING && char.conversingWith) {
+              // Record interaction time (deltaTime is in frames, ~16.67ms per frame at 60fps)
+              interactionGraphRef.current.recordInteraction(
+                char.id,
+                char.conversingWith.id,
+                deltaTime * 16.67
+              );
+            }
+          }
+
+          // Check for ended conversations
+          for (const char of simulationCharacters) {
+            if (char.state === CharacterState.CONVERSING && char.conversingWith && now >= char.conversingEndTime) {
+              char.endConversing();
+            }
+          }
+
+          // Random chance to start new conversations
+          if (Math.random() < CONVERSING_CONFIG.CHANCE_PER_FRAME) {
+            // Get characters that can converse (not already conversing with someone)
+            const availableChars = simulationCharacters.filter((c) => c.canConverse());
+
+            if (availableChars.length >= 2) {
+              // Pick two random characters
+              const shuffled = [...availableChars].sort(() => Math.random() - 0.5);
+              const char1 = shuffled[0];
+              const char2 = shuffled[1];
+
+              // Random duration between min and max
+              const duration = CONVERSING_CONFIG.MIN_DURATION_MS +
+                Math.random() * (CONVERSING_CONFIG.MAX_DURATION_MS - CONVERSING_CONFIG.MIN_DURATION_MS);
+
+              char1.startConversing(char2, duration);
+            }
+          }
+        }
       },
-      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, worldMode, pitchStage]
+      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, modeConfig.conversing, worldMode, pitchStage]
     ),
     simulationCharacters.length > 0
   );
@@ -814,6 +861,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
               y: presenterRef.current.y,
             } : undefined}
             discussionBubbles={discussionBubbles}
+            interactionGraph={interactionGraphRef.current}
           />
         </div>
       </SidebarInset>

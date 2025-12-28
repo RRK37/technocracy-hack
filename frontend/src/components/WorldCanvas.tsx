@@ -7,7 +7,8 @@
 import { useRef, useEffect, forwardRef, useState } from 'react';
 import type { Camera } from '@/src/hooks/useCamera';
 import type { SimulationCharacter } from '@/src/lib/character';
-import { WORLD_CONFIG, CHARACTER_CONFIG, TrapCircle, CharacterState, ModeFeatures } from '@/src/lib/world';
+import { WORLD_CONFIG, CHARACTER_CONFIG, ABSTRACT_LAYER_CONFIG, TrapCircle, CharacterState, ModeFeatures } from '@/src/lib/world';
+import { InteractionGraph } from '@/src/lib/interactionGraph';
 import { drawGrid } from '@/src/lib/canvas-utils';
 
 interface WorldCanvasProps {
@@ -27,11 +28,12 @@ interface WorldCanvasProps {
   modeConfig: ModeFeatures;
   speechBubble?: { text: string; x: number; y: number };
   discussionBubbles?: Array<{ characterId: number; text: string }>;
+  interactionGraph?: InteractionGraph;
 }
 
 export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
   function WorldCanvas(
-    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles, modeConfig, speechBubble, discussionBubbles = [] },
+    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles, modeConfig, speechBubble, discussionBubbles = [], interactionGraph },
     ref
   ) {
     const internalRef = useRef<HTMLCanvasElement>(null);
@@ -89,6 +91,11 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
     useEffect(() => {
       discussionBubblesRef.current = discussionBubbles;
     }, [discussionBubbles]);
+
+    const interactionGraphRef = useRef(interactionGraph);
+    useEffect(() => {
+      interactionGraphRef.current = interactionGraph;
+    }, [interactionGraph]);
 
     // Convert screen coordinates to world coordinates
     const screenToWorld = (screenX: number, screenY: number) => {
@@ -350,9 +357,83 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
         // Sort characters by Y position (painter's algorithm)
         const sortedCharacters = [...currentCharacters].sort((a, b) => a.y - b.y);
 
-        // Draw all characters
-        for (const character of sortedCharacters) {
-          character.draw(ctx, showInteractionRadiusRef.current);
+        // Check if we should render abstract layer (zoomed out below threshold)
+        const isAbstractView = modeConfigRef.current.abstractLayer &&
+          currentCamera.zoom < ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD;
+
+        if (isAbstractView && interactionGraphRef.current) {
+          // === ABSTRACT LAYER RENDERING ===
+          const graph = interactionGraphRef.current;
+          const maxWeight = graph.getMaxWeight() || 1;
+          const edges = graph.getAllEdges();
+
+          // Draw connection lines first (behind dots)
+          for (const edge of edges) {
+            const charA = currentCharacters.find(c => c.id === edge.charA);
+            const charB = currentCharacters.find(c => c.id === edge.charB);
+            if (!charA || !charB) continue;
+
+            // Normalize weight to 0-1 range
+            const normalizedWeight = edge.weight / maxWeight;
+
+            // Calculate line width based on weight
+            const lineWidth = ABSTRACT_LAYER_CONFIG.MIN_LINE_WIDTH +
+              normalizedWeight * (ABSTRACT_LAYER_CONFIG.MAX_LINE_WIDTH - ABSTRACT_LAYER_CONFIG.MIN_LINE_WIDTH);
+
+            // Calculate opacity based on weight (min 0.2, max 0.9)
+            const opacity = 0.2 + normalizedWeight * 0.7;
+
+            ctx.strokeStyle = `rgba(100, 200, 255, ${opacity})`;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(charA.x, charA.y);
+            ctx.lineTo(charB.x, charB.y);
+            ctx.stroke();
+          }
+
+          // Draw character dots
+          for (const character of currentCharacters) {
+            const dotRadius = ABSTRACT_LAYER_CONFIG.DOT_RADIUS;
+
+            // Check if currently conversing (highlight)
+            const isConversing = character.state === CharacterState.CONVERSING;
+
+            // Draw dot glow if conversing
+            if (isConversing) {
+              ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+              ctx.beginPath();
+              ctx.arc(character.x, character.y, dotRadius * 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            // Draw main dot
+            ctx.fillStyle = isConversing ? '#66ccff' : ABSTRACT_LAYER_CONFIG.DOT_COLOR;
+            ctx.beginPath();
+            ctx.arc(character.x, character.y, dotRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw dot border
+            ctx.strokeStyle = isConversing ? '#44aadd' : ABSTRACT_LAYER_CONFIG.DOT_BORDER_COLOR;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw initials label if enabled
+            if (ABSTRACT_LAYER_CONFIG.SHOW_LABELS) {
+              const initials = character.data.name.split(' ').map(n => n[0]).join('').slice(0, 2);
+              ctx.font = 'bold 10px Inter, system-ui, sans-serif';
+              ctx.fillStyle = '#ffffff';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(initials, character.x, character.y);
+            }
+          }
+        } else {
+          // === NORMAL DETAILED RENDERING ===
+          // Draw all characters
+          for (const character of sortedCharacters) {
+            character.draw(ctx, showInteractionRadiusRef.current);
+          }
         }
 
         // Draw trap circles (if toggle is on)
@@ -544,6 +625,62 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
             ctx.fillText(line, bubbleX, ry + padding + i * lineHeight);
           });
           ctx.textAlign = 'left';
+        }
+
+        // Draw conversing bubbles (small bubbles showing "talking to [name]")
+        for (const character of currentCharacters) {
+          if (character.state === CharacterState.CONVERSING && character.conversingBubbleText) {
+            const bubbleX = character.x;
+            const bubbleY = character.y - 70;
+            const padding = 8;
+            const text = character.conversingBubbleText;
+
+            ctx.font = '12px Inter, system-ui, sans-serif';
+            const textWidth = ctx.measureText(text).width + padding * 2;
+            const textHeight = 16 + padding * 2;
+
+            // Draw bubble background (light purple for conversing)
+            ctx.fillStyle = 'rgba(200, 180, 255, 0.9)';
+            ctx.strokeStyle = 'rgba(140, 100, 200, 0.7)';
+            ctx.lineWidth = 1.5;
+
+            const rx = bubbleX - textWidth / 2;
+            const ry = bubbleY - textHeight;
+            const rw = textWidth;
+            const rh = textHeight;
+            const radius = 6;
+
+            ctx.beginPath();
+            ctx.moveTo(rx + radius, ry);
+            ctx.lineTo(rx + rw - radius, ry);
+            ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+            ctx.lineTo(rx + rw, ry + rh - radius);
+            ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+            ctx.lineTo(rx + radius, ry + rh);
+            ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+            ctx.lineTo(rx, ry + radius);
+            ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw pointer triangle
+            ctx.beginPath();
+            ctx.moveTo(bubbleX - 5, ry + rh);
+            ctx.lineTo(bubbleX, ry + rh + 6);
+            ctx.lineTo(bubbleX + 5, ry + rh);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(200, 180, 255, 0.9)';
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw text
+            ctx.fillStyle = '#3a2a5a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, bubbleX, ry + rh / 2);
+            ctx.textAlign = 'left';
+          }
         }
 
         // Restore context state

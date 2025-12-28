@@ -90,6 +90,11 @@ export class SimulationCharacter {
   discussionCenterX: number = 0;
   discussionCenterY: number = 0;
 
+  // Conversing properties (lightweight talking while still moving)
+  conversingWith: SimulationCharacter | null = null;
+  conversingEndTime: number = 0;  // Timestamp when conversation ends
+  conversingBubbleText: string = '';  // "is talking to [name]"
+
   // Aura determines interaction radius (0-1, randomly assigned)
   aura: number;
 
@@ -644,6 +649,11 @@ export class SimulationCharacter {
       this.walkingToAudiencePosition = false;
     }
 
+    // Clear conversing state
+    if (this.state === CharacterState.CONVERSING) {
+      this.endConversing();
+    }
+
     // Reset state
     this.state = CharacterState.WANDERING;
     this.speechText = '';
@@ -705,6 +715,58 @@ export class SimulationCharacter {
    */
   canInteract(): boolean {
     return this.state === CharacterState.WANDERING || this.state === CharacterState.SITTING;
+  }
+
+  /**
+   * Check if this character can start a conversation (not already conversing or in special state)
+   */
+  canConverse(): boolean {
+    return (this.state === CharacterState.WANDERING || this.state === CharacterState.CONVERSING)
+      && this.conversingWith === null;
+  }
+
+  /**
+   * Start a lightweight conversation with another character
+   * Both characters keep moving, just show speech bubbles
+   */
+  startConversing(partner: SimulationCharacter, durationMs: number): void {
+    if (!this.canConverse() || !partner.canConverse()) return;
+
+    // Set up this character
+    this.state = CharacterState.CONVERSING;
+    this.conversingWith = partner;
+    this.conversingEndTime = Date.now() + durationMs;
+    this.conversingBubbleText = `talking to ${partner.data.name}`;
+
+    // Set up partner
+    partner.state = CharacterState.CONVERSING;
+    partner.conversingWith = this;
+    partner.conversingEndTime = Date.now() + durationMs;
+    partner.conversingBubbleText = `talking to ${this.data.name}`;
+  }
+
+  /**
+   * End the current conversation
+   */
+  endConversing(): void {
+    if (this.conversingWith) {
+      // Clear partner's reference first
+      const partner = this.conversingWith;
+      if (partner.conversingWith === this) {
+        partner.conversingWith = null;
+        partner.conversingBubbleText = '';
+        if (partner.state === CharacterState.CONVERSING) {
+          partner.state = CharacterState.WANDERING;
+        }
+      }
+    }
+
+    // Clear this character's conversing state
+    this.conversingWith = null;
+    this.conversingBubbleText = '';
+    if (this.state === CharacterState.CONVERSING) {
+      this.state = CharacterState.WANDERING;
+    }
   }
 
   /**

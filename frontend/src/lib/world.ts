@@ -29,10 +29,30 @@ export const CHARACTER_CONFIG = {
   DIRECTION_CHANGE_CHANCE: 0.01, // 1% chance per frame
 } as const;
 
+// Configuration for lightweight conversing feature (Abstract Layers mode)
+export const CONVERSING_CONFIG = {
+  CHANCE_PER_FRAME: 0.01, // Chance per frame for two wandering agents to start conversing
+  MIN_DURATION_MS: 5000,     // Minimum conversation duration (5 seconds)
+  MAX_DURATION_MS: 15000,    // Maximum conversation duration (15 seconds)
+  BUBBLE_DURATION_MS: 3000,  // How long the "is talking to" bubble shows
+} as const;
+
 export const CAMERA_CONFIG = {
   MIN_ZOOM: 0.5,
   MAX_ZOOM: 5, // Increased from 3 to allow more zoom
   ZOOM_SENSITIVITY: 0.001, // Smoother, more controlled zooming
+} as const;
+
+// Configuration for abstract layer visualization
+export const ABSTRACT_LAYER_CONFIG = {
+  ZOOM_THRESHOLD: 0.7,        // Switch to abstract view below this zoom level
+  DOT_RADIUS: 10,             // Character dot size in abstract view
+  DOT_COLOR: '#ff6b6b',       // Character dot color
+  DOT_BORDER_COLOR: '#cc5555',// Dot border color
+  MIN_LINE_WIDTH: 0.5,        // Minimum connection line width
+  MAX_LINE_WIDTH: 8,          // Maximum connection line width (strong interaction)
+  LINE_COLOR: 'rgba(100, 200, 255, 0.6)',  // Connection line color
+  SHOW_LABELS: true,          // Show character initials on dots
 } as const;
 
 export const SPEECH_CONFIG = {
@@ -61,6 +81,7 @@ export enum CharacterState {
   PRESENTING = 'PRESENTING',   // Standing at front as presenter
   WALKING_TO_AREA = 'WALKING_TO_AREA', // Walking to a target then wandering
   DISCUSSING = 'DISCUSSING',   // In a discussion circle, facing center
+  CONVERSING = 'CONVERSING',   // Lightweight talking with another agent, still moving
 }
 
 // World modes
@@ -88,6 +109,8 @@ export interface ModeFeatures {
   interactionRadius: boolean;   // Show interaction radius around characters
   sitting: boolean;             // Characters can sit when clicked
   audienceFormation: boolean;   // Arrange characters in audience rows
+  conversing: boolean;          // Enable random agent-to-agent conversations
+  abstractLayer: boolean;       // Enable zoom-based abstract layer visualization
 }
 
 // Configuration for each world mode
@@ -98,6 +121,8 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: true,
     sitting: true,
     audienceFormation: false,
+    conversing: false,
+    abstractLayer: false,
   },
   [WorldMode.OBSERVE]: {
     trapCircles: false,
@@ -105,6 +130,8 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: false,
     sitting: false,
     audienceFormation: false,
+    conversing: false,
+    abstractLayer: false,
   },
   [WorldMode.PRESENTING]: {
     // Audience formation with Jordan as presenter
@@ -113,6 +140,8 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: false,
     sitting: false,
     audienceFormation: true,
+    conversing: false,
+    abstractLayer: false,
   },
   [WorldMode.DISCUSS]: {
     // Waiting room: audience in trap circle (hidden), presenter stands on right
@@ -121,6 +150,8 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: false,
     sitting: false,
     audienceFormation: false,
+    conversing: false,
+    abstractLayer: false,
   },
   [WorldMode.PITCH]: {
     // Pitch mode: dynamically controlled by stage
@@ -129,6 +160,8 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: false,
     sitting: false,
     audienceFormation: false, // Controlled per-stage
+    conversing: false,
+    abstractLayer: false,
   },
   [WorldMode.SCRATCH]: {
     // Sandbox mode - starts with OBSERVE defaults
@@ -138,14 +171,18 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     interactionRadius: false,
     sitting: false,
     audienceFormation: false,
+    conversing: false,
+    abstractLayer: false,
   },
   [WorldMode.ABSTRACT_LAYERS]: {
-    // Abstract Layers mode - copy of SCRATCH for new feature development
+    // Abstract Layers mode - features lightweight agent conversations and zoom-based visualization
     trapCircles: false,
     interactions: false,
     interactionRadius: false,
     sitting: false,
     audienceFormation: false,
+    conversing: true,       // Enable random conversations
+    abstractLayer: true,    // Enable zoom-based abstract visualization
   },
 };
 
