@@ -9,6 +9,7 @@ import type { Camera } from '@/src/hooks/useCamera';
 import type { SimulationCharacter } from '@/src/lib/character';
 import { WORLD_CONFIG, CHARACTER_CONFIG, ABSTRACT_LAYER_CONFIG, TrapCircle, CharacterState, ModeFeatures } from '@/src/lib/world';
 import { InteractionGraph } from '@/src/lib/interactionGraph';
+import { GraphSnapshot } from '@/src/lib/interactionGraphHistory';
 import { drawGrid } from '@/src/lib/canvas-utils';
 
 interface WorldCanvasProps {
@@ -29,11 +30,14 @@ interface WorldCanvasProps {
   speechBubble?: { text: string; x: number; y: number };
   discussionBubbles?: Array<{ characterId: number; text: string }>;
   interactionGraph?: InteractionGraph;
+  // Playback mode props
+  isPlaybackMode?: boolean;
+  playbackSnapshot?: GraphSnapshot | null;
 }
 
 export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
   function WorldCanvas(
-    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles, modeConfig, speechBubble, discussionBubbles = [], interactionGraph },
+    { characters, camera, onWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, trapCircles, onAddTrapCircle, onRemoveTrapCircle, onEndInteraction, showInteractionRadius, showTrapCircles, modeConfig, speechBubble, discussionBubbles = [], interactionGraph, isPlaybackMode = false, playbackSnapshot },
     ref
   ) {
     const internalRef = useRef<HTMLCanvasElement>(null);
@@ -96,6 +100,16 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
     useEffect(() => {
       interactionGraphRef.current = interactionGraph;
     }, [interactionGraph]);
+
+    const isPlaybackModeRef = useRef(isPlaybackMode);
+    useEffect(() => {
+      isPlaybackModeRef.current = isPlaybackMode;
+    }, [isPlaybackMode]);
+
+    const playbackSnapshotRef = useRef(playbackSnapshot);
+    useEffect(() => {
+      playbackSnapshotRef.current = playbackSnapshot;
+    }, [playbackSnapshot]);
 
     // Convert screen coordinates to world coordinates
     const screenToWorld = (screenX: number, screenY: number) => {
@@ -361,10 +375,23 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
         const isAbstractView = modeConfigRef.current.abstractLayer &&
           currentCamera.zoom < ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD;
 
-        if (isAbstractView && interactionGraphRef.current) {
+        if (isAbstractView && (interactionGraphRef.current || playbackSnapshotRef.current)) {
           // === ABSTRACT LAYER RENDERING ===
-          const graph = interactionGraphRef.current;
-          const edges = graph.getAllEdges();
+          const isPlayback = isPlaybackModeRef.current && playbackSnapshotRef.current;
+          const snapshot = playbackSnapshotRef.current;
+
+          // Get edges - from snapshot in playback, otherwise from live graph
+          const edges = isPlayback && snapshot
+            ? snapshot.edges
+            : (interactionGraphRef.current?.getAllEdges() || []);
+
+          // Get positions - from snapshot in playback, otherwise from live characters
+          const positionMap = new Map<string, { x: number; y: number }>();
+          if (isPlayback && snapshot) {
+            snapshot.positions.forEach(p => positionMap.set(p.id, { x: p.x, y: p.y }));
+          } else {
+            currentCharacters.forEach(c => positionMap.set(c.id, { x: c.x, y: c.y }));
+          }
 
           // Fixed time threshold for maximum line thickness (60 seconds)
           // Each line's weight is absolute, not relative to other conversations
@@ -372,9 +399,9 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
 
           // Draw connection lines first (behind dots)
           for (const edge of edges) {
-            const charA = currentCharacters.find(c => c.id === edge.charA);
-            const charB = currentCharacters.find(c => c.id === edge.charB);
-            if (!charA || !charB) continue;
+            const posA = positionMap.get(edge.charA);
+            const posB = positionMap.get(edge.charB);
+            if (!posA || !posB) continue;
 
             // Absolute normalized weight - depends only on this pair's conversation time
             // Caps at 1.0 (full thickness) after 60 seconds of cumulative conversation
@@ -391,46 +418,61 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
             ctx.lineWidth = lineWidth;
             ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(charA.x, charA.y);
-            ctx.lineTo(charB.x, charB.y);
+            ctx.moveTo(posA.x, posA.y);
+            ctx.lineTo(posB.x, posB.y);
             ctx.stroke();
           }
 
           // Draw character dots
-          for (const character of currentCharacters) {
+          for (const [charId, pos] of positionMap) {
             const dotRadius = ABSTRACT_LAYER_CONFIG.DOT_RADIUS;
 
-            // Check if currently conversing (highlight)
-            const isConversing = character.state === CharacterState.CONVERSING;
+            // Get character data for name/initials
+            const character = currentCharacters.find(c => c.id === charId);
+
+            // Check if currently conversing (only in live mode)
+            const isConversing = !isPlayback && character?.state === CharacterState.CONVERSING;
 
             // Draw dot glow if conversing
             if (isConversing) {
               ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
               ctx.beginPath();
-              ctx.arc(character.x, character.y, dotRadius * 2, 0, Math.PI * 2);
+              ctx.arc(pos.x, pos.y, dotRadius * 2, 0, Math.PI * 2);
               ctx.fill();
             }
 
-            // Draw main dot
-            ctx.fillStyle = isConversing ? '#66ccff' : ABSTRACT_LAYER_CONFIG.DOT_COLOR;
+            // Draw main dot - amber color in playback mode
+            ctx.fillStyle = isPlayback ? '#f59e0b' : (isConversing ? '#66ccff' : ABSTRACT_LAYER_CONFIG.DOT_COLOR);
             ctx.beginPath();
-            ctx.arc(character.x, character.y, dotRadius, 0, Math.PI * 2);
+            ctx.arc(pos.x, pos.y, dotRadius, 0, Math.PI * 2);
             ctx.fill();
 
             // Draw dot border
-            ctx.strokeStyle = isConversing ? '#44aadd' : ABSTRACT_LAYER_CONFIG.DOT_BORDER_COLOR;
+            ctx.strokeStyle = isPlayback ? '#d97706' : (isConversing ? '#44aadd' : ABSTRACT_LAYER_CONFIG.DOT_BORDER_COLOR);
             ctx.lineWidth = 2;
             ctx.stroke();
 
             // Draw initials label if enabled
-            if (ABSTRACT_LAYER_CONFIG.SHOW_LABELS) {
+            if (ABSTRACT_LAYER_CONFIG.SHOW_LABELS && character) {
               const initials = character.data.name.split(' ').map(n => n[0]).join('').slice(0, 2);
               ctx.font = 'bold 10px Inter, system-ui, sans-serif';
               ctx.fillStyle = '#ffffff';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.fillText(initials, character.x, character.y);
+              ctx.fillText(initials, pos.x, pos.y);
             }
+          }
+
+          // Draw PLAYBACK indicator
+          if (isPlayback) {
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to screen coordinates
+            ctx.font = 'bold 14px Inter, system-ui, sans-serif';
+            ctx.fillStyle = '#f59e0b';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('⏮ PLAYBACK', 10, 10);
+            ctx.restore();
           }
         } else {
           // === NORMAL DETAILED RENDERING ===

@@ -13,6 +13,7 @@ import { useGameLoop } from '@/src/hooks/useGameLoop';
 import { SimulationCharacter } from '@/src/lib/character';
 import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CONVERSING_CONFIG, GRAVITY_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
 import { InteractionGraph } from '@/src/lib/interactionGraph';
+import { InteractionGraphHistory, HISTORY_CONFIG, GraphSnapshot } from '@/src/lib/interactionGraphHistory';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 // Context data from Pitch mode setup
@@ -88,6 +89,15 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
 
   // Interaction graph for abstract layer visualization (tracks conversation history)
   const interactionGraphRef = useRef(new InteractionGraph());
+
+  // History for time-travel playback
+  const historyRef = useRef(new InteractionGraphHistory());
+  const lastSnapshotTimeRef = useRef(0);
+
+  // Playback mode state
+  const [isPlaybackMode, setIsPlaybackMode] = useState(false);
+  const [playbackSnapshot, setPlaybackSnapshot] = useState<GraphSnapshot | null>(null);
+  const [playbackIndex, setPlaybackIndex] = useState(0);
 
   // Add a new trap circle
   const addTrapCircle = useCallback((circle: TrapCircle) => {
@@ -259,6 +269,30 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       interactionTrapCircleIds.current.clear();
     }
   }, [worldMode, simulationCharacters]);
+
+  // Snapshot timer for time history (only in Abstract Layers mode, not during playback)
+  useEffect(() => {
+    if (worldMode !== WorldMode.ABSTRACT_LAYERS || isPlaybackMode) return;
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      if (now - lastSnapshotTimeRef.current >= HISTORY_CONFIG.SNAPSHOT_INTERVAL_MS) {
+        lastSnapshotTimeRef.current = now;
+
+        // Take snapshot of graph edges and character positions
+        const edges = interactionGraphRef.current.getAllEdges();
+        const positions = simulationCharacters.map(c => ({
+          id: c.id,
+          x: c.x,
+          y: c.y,
+        }));
+
+        historyRef.current.takeSnapshot(edges, positions);
+      }
+    }, 100); // Check frequently, but snapshot at configured interval
+
+    return () => clearInterval(intervalId);
+  }, [worldMode, isPlaybackMode, simulationCharacters]);
 
   // PITCH mode: Reset to IDLE stage when entering
   useEffect(() => {
@@ -920,6 +954,8 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
             } : undefined}
             discussionBubbles={discussionBubbles}
             interactionGraph={interactionGraphRef.current}
+            isPlaybackMode={isPlaybackMode}
+            playbackSnapshot={playbackSnapshot}
           />
         </div>
       </SidebarInset>
@@ -943,6 +979,28 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
         isLoadingScript={isLoadingScript}
         gravityEnabled={gravityEnabled}
         onToggleGravity={() => setGravityEnabled(!gravityEnabled)}
+        isPlaybackMode={isPlaybackMode}
+        playbackIndex={playbackIndex}
+        snapshotCount={historyRef.current.getSnapshotCount()}
+        onTogglePlayback={() => {
+          if (isPlaybackMode) {
+            // Switching to live mode
+            setIsPlaybackMode(false);
+            setPlaybackSnapshot(null);
+          } else {
+            // Switching to playback mode - start at latest snapshot
+            const count = historyRef.current.getSnapshotCount();
+            if (count > 0) {
+              setIsPlaybackMode(true);
+              setPlaybackIndex(count - 1);
+              setPlaybackSnapshot(historyRef.current.getSnapshotAtIndex(count - 1));
+            }
+          }
+        }}
+        onSetPlaybackIndex={(index) => {
+          setPlaybackIndex(index);
+          setPlaybackSnapshot(historyRef.current.getSnapshotAtIndex(index));
+        }}
       />
     </SidebarProvider>
   );

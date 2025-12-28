@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers, Magnet } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers, Magnet, History, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -76,9 +76,15 @@ interface WorldControlsProps {
   isLoadingScript?: boolean;
   gravityEnabled?: boolean;
   onToggleGravity?: () => void;
+  // Playback controls
+  isPlaybackMode?: boolean;
+  playbackIndex?: number;
+  snapshotCount?: number;
+  onTogglePlayback?: () => void;
+  onSetPlaybackIndex?: (index: number) => void;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack, scriptPlan, displayedChunks = [], isLoadingScript = false, gravityEnabled = true, onToggleGravity }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack, scriptPlan, displayedChunks = [], isLoadingScript = false, gravityEnabled = true, onToggleGravity, isPlaybackMode = false, playbackIndex = 0, snapshotCount = 0, onTogglePlayback, onSetPlaybackIndex }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -261,6 +267,50 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               )}
             </div>
           </div>
+          {/* Time history playback controls - only show in Abstract Layers mode */}
+          {worldMode === WorldMode.ABSTRACT_LAYERS && onTogglePlayback && onSetPlaybackIndex && snapshotCount > 0 && (
+            <div className="flex flex-col gap-2 p-2 bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <History className="size-3" />
+                  Time History ({snapshotCount} snapshots)
+                </span>
+                <Button
+                  variant={isPlaybackMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={onTogglePlayback}
+                  className={`h-6 px-2 text-xs ${isPlaybackMode ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-transparent'}`}
+                >
+                  {isPlaybackMode ? (
+                    <>
+                      <History className="size-3 mr-1" />
+                      Playback
+                    </>
+                  ) : (
+                    <>
+                      <Radio className="size-3 mr-1" />
+                      Live
+                    </>
+                  )}
+                </Button>
+              </div>
+              {isPlaybackMode && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={snapshotCount - 1}
+                    value={playbackIndex}
+                    onChange={(e) => onSetPlaybackIndex(parseInt(e.target.value))}
+                    className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">
+                    {playbackIndex + 1}/{snapshotCount}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
           {/* Pitch mode controls */}
           {worldMode === WorldMode.PITCH && onAdvancePitchStage && (
             <div className="flex items-center justify-between text-xs">
