@@ -242,6 +242,17 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
     }
   }, [worldMode, simulationCharacters]);
 
+  // ABSTRACT_LAYERS mode: Reset to wandering (copy of SCRATCH for new feature development)
+  useEffect(() => {
+    if (worldMode === WorldMode.ABSTRACT_LAYERS && simulationCharacters.length > 0) {
+      // Reset all characters to wandering
+      simulationCharacters.forEach((char) => char.resetToWandering());
+      // Clear all trap circles
+      setTrapCircles([]);
+      interactionTrapCircleIds.current.clear();
+    }
+  }, [worldMode, simulationCharacters]);
+
   // PITCH mode: Reset to IDLE stage when entering
   useEffect(() => {
     if (worldMode === WorldMode.PITCH) {

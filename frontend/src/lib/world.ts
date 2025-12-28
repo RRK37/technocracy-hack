@@ -71,6 +71,7 @@ export enum WorldMode {
   DISCUSS = 'discuss',          // Waiting room: audience in top-left, presenter on right
   PITCH = 'pitch',              // Combined Present + Discuss with stage transitions
   SCRATCH = 'scratch',          // Sandbox mode for experimenting with new features
+  ABSTRACT_LAYERS = 'abstract-layers', // Copy of scratch for new feature development
 }
 
 // Pitch mode stages
@@ -132,6 +133,14 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
   [WorldMode.SCRATCH]: {
     // Sandbox mode - starts with OBSERVE defaults
     // Modify these as you experiment with new features
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: false,
+  },
+  [WorldMode.ABSTRACT_LAYERS]: {
+    // Abstract Layers mode - copy of SCRATCH for new feature development
     trapCircles: false,
     interactions: false,
     interactionRadius: false,

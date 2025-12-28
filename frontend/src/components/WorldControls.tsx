@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -199,7 +199,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               </Button>
             </div>
             {/* Row 2: Special modes */}
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               <Button
                 variant={worldMode === WorldMode.PRESENTING ? "default" : "outline"}
                 size="sm"
@@ -235,6 +235,15 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               >
                 <Rocket className="size-3 mr-1" />
                 Pitch
+              </Button>
+              <Button
+                variant={worldMode === WorldMode.ABSTRACT_LAYERS ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.ABSTRACT_LAYERS)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.ABSTRACT_LAYERS ? 'bg-pink-600 hover:bg-pink-700 text-white' : 'bg-transparent'}`}
+              >
+                <Layers className="size-3 mr-1" />
+                Abstract Layers
               </Button>
             </div>
           </div>
