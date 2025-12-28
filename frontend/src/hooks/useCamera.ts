@@ -24,10 +24,12 @@ export interface CameraControls {
  * Hook to manage camera state and controls
  */
 export function useCamera(canvasWidth: number, canvasHeight: number): CameraControls {
-  // Calculate minimum zoom to ensure world always fills screen
-  const minZoomX = canvasWidth / WORLD_CONFIG.WIDTH;
-  const minZoomY = canvasHeight / WORLD_CONFIG.HEIGHT;
-  const calculatedMinZoom = Math.max(minZoomX, minZoomY, CAMERA_CONFIG.MIN_ZOOM);
+  // // Calculate minimum zoom to ensure world always fills screen
+  // const minZoomX = canvasWidth / WORLD_CONFIG.WIDTH;
+  // const minZoomY = canvasHeight / WORLD_CONFIG.HEIGHT;
+  // const calculatedMinZoom = Math.max(minZoomX, minZoomY, CAMERA_CONFIG.MIN_ZOOM);
+  // Use MIN_ZOOM directly - allow zooming out to see the entire world (may show void)
+  const calculatedMinZoom = CAMERA_CONFIG.MIN_ZOOM;
 
   const [camera, setCamera] = useState<Camera>({
     x: WORLD_CONFIG.WIDTH / 2,
@@ -39,51 +41,57 @@ export function useCamera(canvasWidth: number, canvasHeight: number): CameraCont
   const dragStartRef = useRef({ x: 0, y: 0, cameraX: 0, cameraY: 0 });
   const rafIdRef = useRef<number | null>(null);
 
-  // Update camera zoom when canvas size changes
-  useEffect(() => {
-    const minZoomX = canvasWidth / WORLD_CONFIG.WIDTH;
-    const minZoomY = canvasHeight / WORLD_CONFIG.HEIGHT;
-    const newMinZoom = Math.max(minZoomX, minZoomY, CAMERA_CONFIG.MIN_ZOOM);
+  // // Update camera zoom when canvas size changes
+  // useEffect(() => {
+  //   const minZoomX = canvasWidth / WORLD_CONFIG.WIDTH;
+  //   const minZoomY = canvasHeight / WORLD_CONFIG.HEIGHT;
+  //   const newMinZoom = Math.max(minZoomX, minZoomY, CAMERA_CONFIG.MIN_ZOOM);
 
-    setCamera((prev) => {
-      // Only update if zoom needs to change
-      if (Math.abs(prev.zoom - newMinZoom) < 0.001) return prev;
+  //   setCamera((prev) => {
+  //     // Only update if zoom needs to change
+  //     if (Math.abs(prev.zoom - newMinZoom) < 0.001) return prev;
 
-      // Inline clamping logic
-      const visibleWidth = canvasWidth / newMinZoom;
-      const visibleHeight = canvasHeight / newMinZoom;
-      const minX = visibleWidth / 2;
-      const maxX = WORLD_CONFIG.WIDTH - visibleWidth / 2;
-      const minY = visibleHeight / 2;
-      const maxY = WORLD_CONFIG.HEIGHT - visibleHeight / 2;
+  //     // Inline clamping logic
+  //     const visibleWidth = canvasWidth / newMinZoom;
+  //     const visibleHeight = canvasHeight / newMinZoom;
+  //     const minX = visibleWidth / 2;
+  //     const maxX = WORLD_CONFIG.WIDTH - visibleWidth / 2;
+  //     const minY = visibleHeight / 2;
+  //     const maxY = WORLD_CONFIG.HEIGHT - visibleHeight / 2;
 
-      return {
-        x: clamp(prev.x, minX, maxX),
-        y: clamp(prev.y, minY, maxY),
-        zoom: newMinZoom,
-      };
-    });
-  }, [canvasWidth, canvasHeight]);
+  //     return {
+  //       x: clamp(prev.x, minX, maxX),
+  //       y: clamp(prev.y, minY, maxY),
+  //       zoom: newMinZoom,
+  //     };
+  //   });
+  // }, [canvasWidth, canvasHeight]);
+  // No longer forcing zoom on canvas resize - let user control zoom freely
+
 
   /**
-   * Clamp camera position to prevent showing void
+   * No clamping - allow free panning at any zoom level
    */
   const clampCamera = useCallback(
-    (x: number, y: number, zoom: number): { x: number; y: number } => {
-      const visibleWidth = canvasWidth / zoom;
-      const visibleHeight = canvasHeight / zoom;
+    // (x: number, y: number, zoom: number): { x: number; y: number } => {
+    //   const visibleWidth = canvasWidth / zoom;
+    //   const visibleHeight = canvasHeight / zoom;
 
-      const minX = visibleWidth / 2;
-      const maxX = WORLD_CONFIG.WIDTH - visibleWidth / 2;
-      const minY = visibleHeight / 2;
-      const maxY = WORLD_CONFIG.HEIGHT - visibleHeight / 2;
+    //   const minX = visibleWidth / 2;
+    //   const maxX = WORLD_CONFIG.WIDTH - visibleWidth / 2;
+    //   const minY = visibleHeight / 2;
+    //   const maxY = WORLD_CONFIG.HEIGHT - visibleHeight / 2;
 
-      return {
-        x: clamp(x, minX, maxX),
-        y: clamp(y, minY, maxY),
-      };
+    //   return {
+    //     x: clamp(x, minX, maxX),
+    //     y: clamp(y, minY, maxY),
+    //   };
+    (x: number, y: number, _zoom: number): { x: number; y: number } => {
+      // No clamping - return position as-is
+      return { x, y };
     },
-    [canvasWidth, canvasHeight]
+    // [canvasWidth, canvasHeight]
+    []
   );
 
   /**

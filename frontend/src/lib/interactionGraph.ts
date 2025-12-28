@@ -71,4 +71,53 @@ export class InteractionGraph {
     clear(): void {
         this.edges.clear();
     }
+
+    /**
+     * Decay a specific edge's weight
+     * Returns true if edge still exists, false if it was removed
+     */
+    decayEdge(charA: string, charB: string, decayAmount: number): boolean {
+        const key = makeEdgeKey(charA, charB);
+        const edge = this.edges.get(key);
+        if (!edge) return false;
+
+        edge.weight = Math.max(0, edge.weight - decayAmount);
+
+        // Remove edge if weight drops to zero
+        if (edge.weight <= 0) {
+            this.edges.delete(key);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Decay all edges by a linear amount (same amount per second for all edges)
+     * @param decayPerSecond - fixed weight to subtract per second
+     * @param deltaMs - time elapsed in milliseconds
+     * @param activeConversations - Set of edge keys currently in conversation (won't decay)
+     */
+    decayAllEdges(decayPerSecond: number, deltaMs: number, activeConversations: Set<string> = new Set()): void {
+        const decayAmount = (decayPerSecond * deltaMs) / 1000;
+
+        for (const [key, edge] of this.edges.entries()) {
+            // Skip edges that are currently in active conversation
+            if (activeConversations.has(key)) continue;
+
+            // Linear decay - subtract fixed amount
+            edge.weight = edge.weight - decayAmount;
+
+            // Remove edge if weight drops to zero or below
+            if (edge.weight <= 0) {
+                this.edges.delete(key);
+            }
+        }
+    }
+
+    /**
+     * Get edge key for a character pair (for tracking active conversations)
+     */
+    static getEdgeKey(charA: string, charB: string): string {
+        return makeEdgeKey(charA, charB);
+    }
 }

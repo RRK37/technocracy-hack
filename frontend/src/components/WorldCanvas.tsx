@@ -364,8 +364,11 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
         if (isAbstractView && interactionGraphRef.current) {
           // === ABSTRACT LAYER RENDERING ===
           const graph = interactionGraphRef.current;
-          const maxWeight = graph.getMaxWeight() || 1;
           const edges = graph.getAllEdges();
+
+          // Fixed time threshold for maximum line thickness (60 seconds)
+          // Each line's weight is absolute, not relative to other conversations
+          const MAX_TIME_FOR_FULL_WEIGHT = 800; // 60 seconds in ms
 
           // Draw connection lines first (behind dots)
           for (const edge of edges) {
@@ -373,8 +376,9 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
             const charB = currentCharacters.find(c => c.id === edge.charB);
             if (!charA || !charB) continue;
 
-            // Normalize weight to 0-1 range
-            const normalizedWeight = edge.weight / maxWeight;
+            // Absolute normalized weight - depends only on this pair's conversation time
+            // Caps at 1.0 (full thickness) after 60 seconds of cumulative conversation
+            const normalizedWeight = Math.min(edge.weight / MAX_TIME_FOR_FULL_WEIGHT, 1.0);
 
             // Calculate line width based on weight
             const lineWidth = ABSTRACT_LAYER_CONFIG.MIN_LINE_WIDTH +

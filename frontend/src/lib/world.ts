@@ -31,14 +31,14 @@ export const CHARACTER_CONFIG = {
 
 // Configuration for lightweight conversing feature (Abstract Layers mode)
 export const CONVERSING_CONFIG = {
-  CHANCE_PER_FRAME: 0.01, // Chance per frame for two wandering agents to start conversing
+  CHANCE_PER_FRAME: 0.006, // Chance per frame for two wandering agents to start conversing
   MIN_DURATION_MS: 5000,     // Minimum conversation duration (5 seconds)
   MAX_DURATION_MS: 15000,    // Maximum conversation duration (15 seconds)
   BUBBLE_DURATION_MS: 3000,  // How long the "is talking to" bubble shows
 } as const;
 
 export const CAMERA_CONFIG = {
-  MIN_ZOOM: 0.5,
+  MIN_ZOOM: 0.1,  // Allow extreme zoom out for abstract layer overview
   MAX_ZOOM: 5, // Increased from 3 to allow more zoom
   ZOOM_SENSITIVITY: 0.001, // Smoother, more controlled zooming
 } as const;
@@ -49,8 +49,8 @@ export const ABSTRACT_LAYER_CONFIG = {
   DOT_RADIUS: 10,             // Character dot size in abstract view
   DOT_COLOR: '#ff6b6b',       // Character dot color
   DOT_BORDER_COLOR: '#cc5555',// Dot border color
-  MIN_LINE_WIDTH: 0.5,        // Minimum connection line width
-  MAX_LINE_WIDTH: 8,          // Maximum connection line width (strong interaction)
+  MIN_LINE_WIDTH: 1,          // Minimum connection line width (more visible)
+  MAX_LINE_WIDTH: 12,         // Maximum connection line width (more dramatic difference)
   LINE_COLOR: 'rgba(100, 200, 255, 0.6)',  // Connection line color
   SHOW_LABELS: true,          // Show character initials on dots
 } as const;

@@ -771,6 +771,24 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
               char1.startConversing(char2, duration);
             }
           }
+
+          // Decay edges for pairs not currently conversing
+          // Build set of active conversation edge keys
+          const activeConversations = new Set<string>();
+          for (const char of simulationCharacters) {
+            if (char.state === CharacterState.CONVERSING && char.conversingWith) {
+              const key = InteractionGraph.getEdgeKey(char.id, char.conversingWith.id);
+              activeConversations.add(key);
+            }
+          }
+
+          // Linear decay: 20ms weight per second (a 10s conversation fades in ~500ms... adjust as needed)
+          const DECAY_PER_SECOND = 1000; // Fixed amount subtracted per second
+          interactionGraphRef.current.decayAllEdges(
+            DECAY_PER_SECOND,
+            deltaTime * 16.67,
+            activeConversations
+          );
         }
       },
       [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, modeConfig.conversing, worldMode, pitchStage]
