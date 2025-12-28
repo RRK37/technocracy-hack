@@ -38,7 +38,7 @@ export const CONVERSING_CONFIG = {
 } as const;
 
 export const CAMERA_CONFIG = {
-  MIN_ZOOM: 0.1,  // Allow extreme zoom out for abstract layer overview
+  MIN_ZOOM: 0.2,  // Allow extreme zoom out for abstract layer overview
   MAX_ZOOM: 5, // Increased from 3 to allow more zoom
   ZOOM_SENSITIVITY: 0.001, // Smoother, more controlled zooming
 } as const;
@@ -53,6 +53,14 @@ export const ABSTRACT_LAYER_CONFIG = {
   MAX_LINE_WIDTH: 12,         // Maximum connection line width (more dramatic difference)
   LINE_COLOR: 'rgba(100, 200, 255, 0.6)',  // Connection line color
   SHOW_LABELS: true,          // Show character initials on dots
+} as const;
+
+// Configuration for gravity attraction between connected agents
+export const GRAVITY_CONFIG = {
+  ENABLED: true,              // Enable/disable gravity attraction
+  STRENGTH: 0.0008,          // Base attraction strength (tune this!)
+  MAX_FORCE: 0.5,             // Maximum force to prevent extreme acceleration
+  MIN_DISTANCE: 50,           // Minimum distance to prevent overlap
 } as const;
 
 export const SPEECH_CONFIG = {

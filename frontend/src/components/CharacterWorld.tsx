@@ -11,7 +11,7 @@ import { useCharacterData } from '@/src/hooks/useCharacterData';
 import { useCamera } from '@/src/hooks/useCamera';
 import { useGameLoop } from '@/src/hooks/useGameLoop';
 import { SimulationCharacter } from '@/src/lib/character';
-import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CONVERSING_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
+import { getRandomPosition, getRandomVelocity, TrapCircle, CHARACTER_CONFIG, CONVERSING_CONFIG, GRAVITY_CONFIG, CharacterState, WorldMode, MODE_CONFIG, WORLD_CONFIG, PitchStage } from '@/src/lib/world';
 import { InteractionGraph } from '@/src/lib/interactionGraph';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
@@ -53,6 +53,9 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
 
   // Toggle for showing trap circles
   const [showTrapCircles, setShowTrapCircles] = useState(true);
+
+  // Toggle for gravity attraction effect
+  const [gravityEnabled, setGravityEnabled] = useState(true);
 
   // World mode state (initialized from prop)
   const [worldMode, setWorldMode] = useState<WorldMode>(initialMode);
@@ -789,9 +792,46 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
             deltaTime * 16.67,
             activeConversations
           );
+
+          // Gravity attraction: agents with connections pull toward each other
+          if (GRAVITY_CONFIG.ENABLED && gravityEnabled) {
+            for (const char of simulationCharacters) {
+              // Get all edges for this character
+              const edges = interactionGraphRef.current.getEdgesForCharacter(char.id);
+
+              for (const edge of edges) {
+                // Find the partner character
+                const partner = simulationCharacters.find(c => c.id === edge.partnerId);
+                if (!partner) continue;
+
+                // Calculate direction to partner
+                const dx = partner.x - char.x;
+                const dy = partner.y - char.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Skip if too close (prevent overlap)
+                if (distance < GRAVITY_CONFIG.MIN_DISTANCE) continue;
+
+                // Normalize direction
+                const nx = dx / distance;
+                const ny = dy / distance;
+
+                // Calculate force based on edge weight
+                // Force = strength * weight, capped at max
+                const force = Math.min(
+                  GRAVITY_CONFIG.STRENGTH * edge.weight,
+                  GRAVITY_CONFIG.MAX_FORCE
+                );
+
+                // Apply force to velocity
+                char.vx += nx * force * deltaTime;
+                char.vy += ny * force * deltaTime;
+              }
+            }
+          }
         }
       },
-      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, modeConfig.conversing, worldMode, pitchStage]
+      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, modeConfig.conversing, gravityEnabled, worldMode, pitchStage]
     ),
     simulationCharacters.length > 0
   );
@@ -901,6 +941,8 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
         scriptPlan={scriptPlan}
         displayedChunks={displayedChunks}
         isLoadingScript={isLoadingScript}
+        gravityEnabled={gravityEnabled}
+        onToggleGravity={() => setGravityEnabled(!gravityEnabled)}
       />
     </SidebarProvider>
   );

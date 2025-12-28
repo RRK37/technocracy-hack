@@ -632,58 +632,64 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
         }
 
         // Draw conversing bubbles (small bubbles showing "talking to [name]")
-        for (const character of currentCharacters) {
-          if (character.state === CharacterState.CONVERSING && character.conversingBubbleText) {
-            const bubbleX = character.x;
-            const bubbleY = character.y - 70;
-            const padding = 8;
-            const text = character.conversingBubbleText;
+        // Hide when zoomed out in abstract view
+        const hideConversingBubbles = modeConfigRef.current.abstractLayer &&
+          currentCamera.zoom < ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD;
 
-            ctx.font = '12px Inter, system-ui, sans-serif';
-            const textWidth = ctx.measureText(text).width + padding * 2;
-            const textHeight = 16 + padding * 2;
+        if (!hideConversingBubbles) {
+          for (const character of currentCharacters) {
+            if (character.state === CharacterState.CONVERSING && character.conversingBubbleText) {
+              const bubbleX = character.x;
+              const bubbleY = character.y - 70;
+              const padding = 8;
+              const text = character.conversingBubbleText;
 
-            // Draw bubble background (light purple for conversing)
-            ctx.fillStyle = 'rgba(200, 180, 255, 0.9)';
-            ctx.strokeStyle = 'rgba(140, 100, 200, 0.7)';
-            ctx.lineWidth = 1.5;
+              ctx.font = '12px Inter, system-ui, sans-serif';
+              const textWidth = ctx.measureText(text).width + padding * 2;
+              const textHeight = 16 + padding * 2;
 
-            const rx = bubbleX - textWidth / 2;
-            const ry = bubbleY - textHeight;
-            const rw = textWidth;
-            const rh = textHeight;
-            const radius = 6;
+              // Draw bubble background (light purple for conversing)
+              ctx.fillStyle = 'rgba(200, 180, 255, 0.9)';
+              ctx.strokeStyle = 'rgba(140, 100, 200, 0.7)';
+              ctx.lineWidth = 1.5;
 
-            ctx.beginPath();
-            ctx.moveTo(rx + radius, ry);
-            ctx.lineTo(rx + rw - radius, ry);
-            ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
-            ctx.lineTo(rx + rw, ry + rh - radius);
-            ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
-            ctx.lineTo(rx + radius, ry + rh);
-            ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
-            ctx.lineTo(rx, ry + radius);
-            ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+              const rx = bubbleX - textWidth / 2;
+              const ry = bubbleY - textHeight;
+              const rw = textWidth;
+              const rh = textHeight;
+              const radius = 6;
 
-            // Draw pointer triangle
-            ctx.beginPath();
-            ctx.moveTo(bubbleX - 5, ry + rh);
-            ctx.lineTo(bubbleX, ry + rh + 6);
-            ctx.lineTo(bubbleX + 5, ry + rh);
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(200, 180, 255, 0.9)';
-            ctx.fill();
-            ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(rx + radius, ry);
+              ctx.lineTo(rx + rw - radius, ry);
+              ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+              ctx.lineTo(rx + rw, ry + rh - radius);
+              ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+              ctx.lineTo(rx + radius, ry + rh);
+              ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+              ctx.lineTo(rx, ry + radius);
+              ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+              ctx.closePath();
+              ctx.fill();
+              ctx.stroke();
 
-            // Draw text
-            ctx.fillStyle = '#3a2a5a';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, bubbleX, ry + rh / 2);
-            ctx.textAlign = 'left';
+              // Draw pointer triangle
+              ctx.beginPath();
+              ctx.moveTo(bubbleX - 5, ry + rh);
+              ctx.lineTo(bubbleX, ry + rh + 6);
+              ctx.lineTo(bubbleX + 5, ry + rh);
+              ctx.closePath();
+              ctx.fillStyle = 'rgba(200, 180, 255, 0.9)';
+              ctx.fill();
+              ctx.stroke();
+
+              // Draw text
+              ctx.fillStyle = '#3a2a5a';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(text, bubbleX, ry + rh / 2);
+              ctx.textAlign = 'left';
+            }
           }
         }
 

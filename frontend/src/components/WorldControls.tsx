@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers, Magnet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -74,9 +74,11 @@ interface WorldControlsProps {
   scriptPlan?: string | null;
   displayedChunks?: string[];
   isLoadingScript?: boolean;
+  gravityEnabled?: boolean;
+  onToggleGravity?: () => void;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack, scriptPlan, displayedChunks = [], isLoadingScript = false }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack, scriptPlan, displayedChunks = [], isLoadingScript = false, gravityEnabled = true, onToggleGravity }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -245,6 +247,18 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 <Layers className="size-3 mr-1" />
                 Abstract Layers
               </Button>
+              {/* Gravity toggle - only show in Abstract Layers mode */}
+              {worldMode === WorldMode.ABSTRACT_LAYERS && onToggleGravity && (
+                <Button
+                  variant={gravityEnabled ? "default" : "outline"}
+                  size="sm"
+                  onClick={onToggleGravity}
+                  className={`h-6 px-2 text-xs ${gravityEnabled ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-transparent'}`}
+                >
+                  <Magnet className="size-3 mr-1" />
+                  Gravity {gravityEnabled ? 'ON' : 'OFF'}
+                </Button>
+              )}
             </div>
           </div>
           {/* Pitch mode controls */}

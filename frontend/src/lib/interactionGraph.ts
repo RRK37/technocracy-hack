@@ -120,4 +120,22 @@ export class InteractionGraph {
     static getEdgeKey(charA: string, charB: string): string {
         return makeEdgeKey(charA, charB);
     }
+
+    /**
+     * Get all edges involving a specific character
+     * Returns array of { partnerId, weight } for each connection
+     */
+    getEdgesForCharacter(charId: string): Array<{ partnerId: string; weight: number }> {
+        const result: Array<{ partnerId: string; weight: number }> = [];
+
+        for (const edge of this.edges.values()) {
+            if (edge.charA === charId) {
+                result.push({ partnerId: edge.charB, weight: edge.weight });
+            } else if (edge.charB === charId) {
+                result.push({ partnerId: edge.charA, weight: edge.weight });
+            }
+        }
+
+        return result;
+    }
 }
