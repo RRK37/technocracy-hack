@@ -45,7 +45,8 @@ export const CAMERA_CONFIG = {
 
 // Configuration for abstract layer visualization
 export const ABSTRACT_LAYER_CONFIG = {
-  ZOOM_THRESHOLD: 0.7,        // Switch to abstract view below this zoom level
+  ZOOM_THRESHOLD_HIGH: 0.7,   // Start fading to abstract at this zoom level
+  ZOOM_THRESHOLD_LOW: 0.5,    // Fully abstract below this zoom level (blend zone: 0.5-0.7)
   DOT_RADIUS: 10,             // Character dot size in abstract view
   DOT_COLOR: '#ff6b6b',       // Character dot color
   DOT_BORDER_COLOR: '#cc5555',// Dot border color

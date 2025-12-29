@@ -57,6 +57,10 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
 
   // Toggle for gravity attraction effect
   const [gravityEnabled, setGravityEnabled] = useState(true);
+  const [gravityStrength, setGravityStrength] = useState<number>(GRAVITY_CONFIG.STRENGTH);
+
+  // Toggle for static mode (agents don't wander, only move from gravity)
+  const [staticMode, setStaticMode] = useState(false);
 
   // World mode state (initialized from prop)
   const [worldMode, setWorldMode] = useState<WorldMode>(initialMode);
@@ -124,6 +128,16 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       return new SimulationCharacter(char, x, y, vx, vy);
     });
   }, [characterData]);
+
+  // Reset velocities when entering static mode
+  useEffect(() => {
+    if (staticMode) {
+      simulationCharacters.forEach((char) => {
+        char.vx = 0;
+        char.vy = 0;
+      });
+    }
+  }, [staticMode, simulationCharacters]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -649,7 +663,16 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
     useCallback(
       (deltaTime) => {
         // Update all characters
-        simulationCharacters.forEach((char) => char.update(deltaTime, simulationCharacters, trapCircles));
+        if (staticMode) {
+          // Static mode: only apply velocity to position (from gravity), no wandering
+          simulationCharacters.forEach((char) => {
+            char.x += char.vx;
+            char.y += char.vy;
+          });
+        } else {
+          // Normal mode: full movement and wandering
+          simulationCharacters.forEach((char) => char.update(deltaTime, simulationCharacters, trapCircles));
+        }
 
         // Check for potential interactions between characters (only in interactive mode)
         if (modeConfig.interactions) {
@@ -853,7 +876,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
                 // Calculate force based on edge weight
                 // Force = strength * weight, capped at max
                 const force = Math.min(
-                  GRAVITY_CONFIG.STRENGTH * edge.weight,
+                  gravityStrength * edge.weight,
                   GRAVITY_CONFIG.MAX_FORCE
                 );
 
@@ -865,7 +888,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
           }
         }
       },
-      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, modeConfig.conversing, gravityEnabled, worldMode, pitchStage]
+      [simulationCharacters, trapCircles, addTrapCircle, modeConfig.interactions, modeConfig.conversing, gravityEnabled, gravityStrength, staticMode, worldMode, pitchStage]
     ),
     simulationCharacters.length > 0
   );
@@ -979,6 +1002,8 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
         isLoadingScript={isLoadingScript}
         gravityEnabled={gravityEnabled}
         onToggleGravity={() => setGravityEnabled(!gravityEnabled)}
+        gravityStrength={gravityStrength}
+        onSetGravityStrength={setGravityStrength}
         isPlaybackMode={isPlaybackMode}
         playbackIndex={playbackIndex}
         snapshotCount={historyRef.current.getSnapshotCount()}
@@ -1001,6 +1026,8 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
           setPlaybackIndex(index);
           setPlaybackSnapshot(historyRef.current.getSnapshotAtIndex(index));
         }}
+        staticMode={staticMode}
+        onToggleStaticMode={() => setStaticMode(!staticMode)}
       />
     </SidebarProvider>
   );

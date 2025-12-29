@@ -371,12 +371,28 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
         // Sort characters by Y position (painter's algorithm)
         const sortedCharacters = [...currentCharacters].sort((a, b) => a.y - b.y);
 
-        // Check if we should render abstract layer (zoomed out below threshold)
-        const isAbstractView = modeConfigRef.current.abstractLayer &&
-          currentCamera.zoom < ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD;
+        // Calculate blend factors for smooth transition between sprites and dots
+        // blendFactor: 1.0 = fully detailed (sprites), 0.0 = fully abstract (dots)
+        const HIGH = ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD_HIGH;
+        const LOW = ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD_LOW;
 
-        if (isAbstractView && (interactionGraphRef.current || playbackSnapshotRef.current)) {
-          // === ABSTRACT LAYER RENDERING ===
+        let blendFactor = 1.0;
+        if (modeConfigRef.current.abstractLayer) {
+          if (currentCamera.zoom >= HIGH) {
+            blendFactor = 1.0; // Fully detailed
+          } else if (currentCamera.zoom <= LOW) {
+            blendFactor = 0.0; // Fully abstract
+          } else {
+            // In blend zone - linear interpolation
+            blendFactor = (currentCamera.zoom - LOW) / (HIGH - LOW);
+          }
+        }
+
+        const showAbstract = modeConfigRef.current.abstractLayer && currentCamera.zoom < HIGH;
+        const showSprites = blendFactor > 0;
+
+        // === ABSTRACT LAYER RENDERING (when in blend zone or fully abstract) ===
+        if (showAbstract && (interactionGraphRef.current || playbackSnapshotRef.current)) {
           const isPlayback = isPlaybackModeRef.current && playbackSnapshotRef.current;
           const snapshot = playbackSnapshotRef.current;
 
@@ -393,28 +409,23 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
             currentCharacters.forEach(c => positionMap.set(c.id, { x: c.x, y: c.y }));
           }
 
-          // Fixed time threshold for maximum line thickness (60 seconds)
-          // Each line's weight is absolute, not relative to other conversations
-          const MAX_TIME_FOR_FULL_WEIGHT = 800; // 60 seconds in ms
+          // Fixed time threshold for maximum line thickness
+          const MAX_TIME_FOR_FULL_WEIGHT = 800;
 
-          // Draw connection lines first (behind dots)
+          // Draw connection lines (visible throughout transition)
           for (const edge of edges) {
             const posA = positionMap.get(edge.charA);
             const posB = positionMap.get(edge.charB);
             if (!posA || !posB) continue;
 
-            // Absolute normalized weight - depends only on this pair's conversation time
-            // Caps at 1.0 (full thickness) after 60 seconds of cumulative conversation
             const normalizedWeight = Math.min(edge.weight / MAX_TIME_FOR_FULL_WEIGHT, 1.0);
-
-            // Calculate line width based on weight
             const lineWidth = ABSTRACT_LAYER_CONFIG.MIN_LINE_WIDTH +
               normalizedWeight * (ABSTRACT_LAYER_CONFIG.MAX_LINE_WIDTH - ABSTRACT_LAYER_CONFIG.MIN_LINE_WIDTH);
 
-            // Calculate opacity based on weight (min 0.2, max 0.9)
-            const opacity = 0.2 + normalizedWeight * 0.7;
+            // Lines fade in as we zoom out
+            const lineOpacity = (0.2 + normalizedWeight * 0.7) * (1 - blendFactor * 0.7);
 
-            ctx.strokeStyle = `rgba(100, 200, 255, ${opacity})`;
+            ctx.strokeStyle = `rgba(100, 200, 255, ${lineOpacity})`;
             ctx.lineWidth = lineWidth;
             ctx.lineCap = 'round';
             ctx.beginPath();
@@ -423,50 +434,55 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
             ctx.stroke();
           }
 
-          // Draw character dots
-          for (const [charId, pos] of positionMap) {
-            const dotRadius = ABSTRACT_LAYER_CONFIG.DOT_RADIUS;
+          // Draw character dots (fade in as sprites fade out)
+          const dotOpacity = 1 - blendFactor;
+          if (dotOpacity > 0.01) {
+            for (const [charId, pos] of positionMap) {
+              const dotRadius = ABSTRACT_LAYER_CONFIG.DOT_RADIUS;
+              const character = currentCharacters.find(c => c.id === charId);
+              const isConversing = !isPlayback && character?.state === CharacterState.CONVERSING;
 
-            // Get character data for name/initials
-            const character = currentCharacters.find(c => c.id === charId);
+              // Draw dot glow if conversing
+              if (isConversing) {
+                ctx.fillStyle = `rgba(100, 200, 255, ${0.3 * dotOpacity})`;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, dotRadius * 2, 0, Math.PI * 2);
+                ctx.fill();
+              }
 
-            // Check if currently conversing (only in live mode)
-            const isConversing = !isPlayback && character?.state === CharacterState.CONVERSING;
-
-            // Draw dot glow if conversing
-            if (isConversing) {
-              ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+              // Draw main dot with fade opacity
+              const dotColor = isPlayback ? '#f59e0b' : (isConversing ? '#66ccff' : ABSTRACT_LAYER_CONFIG.DOT_COLOR);
+              ctx.globalAlpha = dotOpacity;
+              ctx.fillStyle = dotColor;
               ctx.beginPath();
-              ctx.arc(pos.x, pos.y, dotRadius * 2, 0, Math.PI * 2);
+              ctx.arc(pos.x, pos.y, dotRadius, 0, Math.PI * 2);
               ctx.fill();
-            }
 
-            // Draw main dot - amber color in playback mode
-            ctx.fillStyle = isPlayback ? '#f59e0b' : (isConversing ? '#66ccff' : ABSTRACT_LAYER_CONFIG.DOT_COLOR);
-            ctx.beginPath();
-            ctx.arc(pos.x, pos.y, dotRadius, 0, Math.PI * 2);
-            ctx.fill();
+              // Draw dot border
+              const borderColor = isPlayback ? '#d97706' : (isConversing ? '#44aadd' : ABSTRACT_LAYER_CONFIG.DOT_BORDER_COLOR);
+              ctx.strokeStyle = borderColor;
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              ctx.globalAlpha = 1;
 
-            // Draw dot border
-            ctx.strokeStyle = isPlayback ? '#d97706' : (isConversing ? '#44aadd' : ABSTRACT_LAYER_CONFIG.DOT_BORDER_COLOR);
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Draw initials label if enabled
-            if (ABSTRACT_LAYER_CONFIG.SHOW_LABELS && character) {
-              const initials = character.data.name.split(' ').map(n => n[0]).join('').slice(0, 2);
-              ctx.font = 'bold 10px Inter, system-ui, sans-serif';
-              ctx.fillStyle = '#ffffff';
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(initials, pos.x, pos.y);
+              // Draw initials label (only when dots are mostly visible)
+              if (ABSTRACT_LAYER_CONFIG.SHOW_LABELS && character && dotOpacity > 0.5) {
+                ctx.globalAlpha = dotOpacity;
+                const initials = character.data.name.split(' ').map(n => n[0]).join('').slice(0, 2);
+                ctx.font = 'bold 10px Inter, system-ui, sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(initials, pos.x, pos.y);
+                ctx.globalAlpha = 1;
+              }
             }
           }
 
           // Draw PLAYBACK indicator
           if (isPlayback) {
             ctx.save();
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to screen coordinates
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.font = 'bold 14px Inter, system-ui, sans-serif';
             ctx.fillStyle = '#f59e0b';
             ctx.textAlign = 'left';
@@ -474,12 +490,15 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
             ctx.fillText('⏮ PLAYBACK', 10, 10);
             ctx.restore();
           }
-        } else {
-          // === NORMAL DETAILED RENDERING ===
-          // Draw all characters
+        }
+
+        // === SPRITE RENDERING (fade out as we zoom out in blend zone) ===
+        if (showSprites) {
+          ctx.globalAlpha = blendFactor;
           for (const character of sortedCharacters) {
             character.draw(ctx, showInteractionRadiusRef.current);
           }
+          ctx.globalAlpha = 1;
         }
 
         // Draw trap circles (if toggle is on)
@@ -676,7 +695,7 @@ export const WorldCanvas = forwardRef<HTMLCanvasElement, WorldCanvasProps>(
         // Draw conversing bubbles (small bubbles showing "talking to [name]")
         // Hide when zoomed out in abstract view
         const hideConversingBubbles = modeConfigRef.current.abstractLayer &&
-          currentCamera.zoom < ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD;
+          currentCamera.zoom < ABSTRACT_LAYER_CONFIG.ZOOM_THRESHOLD_LOW;
 
         if (!hideConversingBubbles) {
           for (const character of currentCharacters) {

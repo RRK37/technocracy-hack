@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers, Magnet, History, Radio } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers, Magnet, History, Radio, Anchor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -76,15 +76,20 @@ interface WorldControlsProps {
   isLoadingScript?: boolean;
   gravityEnabled?: boolean;
   onToggleGravity?: () => void;
+  gravityStrength?: number;
+  onSetGravityStrength?: (strength: number) => void;
   // Playback controls
   isPlaybackMode?: boolean;
   playbackIndex?: number;
   snapshotCount?: number;
   onTogglePlayback?: () => void;
   onSetPlaybackIndex?: (index: number) => void;
+  // Static mode
+  staticMode?: boolean;
+  onToggleStaticMode?: () => void;
 }
 
-export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack, scriptPlan, displayedChunks = [], isLoadingScript = false, gravityEnabled = true, onToggleGravity, isPlaybackMode = false, playbackIndex = 0, snapshotCount = 0, onTogglePlayback, onSetPlaybackIndex }: WorldControlsProps) {
+export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircleCount = 0, showInteractionRadius = true, onToggleInteractionRadius, showTrapCircles = true, onToggleTrapCircles, worldMode, onSetWorldMode, modeConfig, pitchStage, onAdvancePitchStage, onBack, scriptPlan, displayedChunks = [], isLoadingScript = false, gravityEnabled = true, onToggleGravity, gravityStrength = 0.0008, onSetGravityStrength, isPlaybackMode = false, playbackIndex = 0, snapshotCount = 0, onTogglePlayback, onSetPlaybackIndex, staticMode = false, onToggleStaticMode }: WorldControlsProps) {
   const [status, setStatus] = useState<'submitted' | 'streaming' | 'ready' | 'error'>('ready');
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -265,8 +270,38 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                   Gravity {gravityEnabled ? 'ON' : 'OFF'}
                 </Button>
               )}
+              {/* Static mode toggle - agents start still, only move from gravity */}
+              {worldMode === WorldMode.ABSTRACT_LAYERS && onToggleStaticMode && (
+                <Button
+                  variant={staticMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={onToggleStaticMode}
+                  className={`h-6 px-2 text-xs ${staticMode ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-transparent'}`}
+                >
+                  <Anchor className="size-3 mr-1" />
+                  {staticMode ? 'Static' : 'Moving'}
+                </Button>
+              )}
             </div>
           </div>
+          {/* Gravity strength slider - only show when gravity is enabled */}
+          {worldMode === WorldMode.ABSTRACT_LAYERS && gravityEnabled && onSetGravityStrength && (
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-xs text-muted-foreground">Gravity:</span>
+              <input
+                type="range"
+                min={0}
+                max={0.01}
+                step={0.0001}
+                value={gravityStrength}
+                onChange={(e) => onSetGravityStrength(parseFloat(e.target.value))}
+                className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              />
+              <span className="text-xs text-muted-foreground w-12 text-right">
+                {(gravityStrength * 1000).toFixed(1)}
+              </span>
+            </div>
+          )}
           {/* Time history playback controls - only show in Abstract Layers mode */}
           {worldMode === WorldMode.ABSTRACT_LAYERS && onTogglePlayback && onSetPlaybackIndex && snapshotCount > 0 && (
             <div className="flex flex-col gap-2 p-2 bg-gray-800/50 rounded-lg">
