@@ -873,16 +873,28 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
                 const nx = dx / distance;
                 const ny = dy / distance;
 
-                // Calculate force based on edge weight
-                // Force = strength * weight, capped at max
-                const force = Math.min(
-                  gravityStrength * edge.weight,
-                  GRAVITY_CONFIG.MAX_FORCE
-                );
+                // Distance-based behavior:
+                // - When far: accelerate toward partner
+                // - When within equilibrium: apply damping instead
+                if (distance > GRAVITY_CONFIG.EQUILIBRIUM_DISTANCE) {
+                  // Calculate force based on edge weight
+                  // Force = strength * weight, capped at max
+                  const force = Math.min(
+                    gravityStrength * edge.weight,
+                    GRAVITY_CONFIG.MAX_FORCE
+                  );
 
-                // Apply force to velocity
-                char.vx += nx * force * deltaTime;
-                char.vy += ny * force * deltaTime;
+                  // Apply force to velocity (accelerate toward partner)
+                  char.vx += nx * force * deltaTime;
+                  char.vy += ny * force * deltaTime;
+                } else {
+                  // Within equilibrium zone - apply damping to slow down
+                  // Stronger damping the closer they are
+                  const dampingFactor = GRAVITY_CONFIG.DAMPING -
+                    (1 - distance / GRAVITY_CONFIG.EQUILIBRIUM_DISTANCE) * 0.1;
+                  char.vx *= Math.max(dampingFactor, 0.8);
+                  char.vy *= Math.max(dampingFactor, 0.8);
+                }
               }
             }
           }

@@ -59,9 +59,11 @@ export const ABSTRACT_LAYER_CONFIG = {
 // Configuration for gravity attraction between connected agents
 export const GRAVITY_CONFIG = {
   ENABLED: true,              // Enable/disable gravity attraction
-  STRENGTH: 0.0008,          // Base attraction strength (tune this!)
+  STRENGTH: 0.0008,           // Base attraction strength (tune this!)
   MAX_FORCE: 0.5,             // Maximum force to prevent extreme acceleration
   MIN_DISTANCE: 50,           // Minimum distance to prevent overlap
+  EQUILIBRIUM_DISTANCE: 80,   // Agents stop accelerating at this distance
+  DAMPING: 0.99,              // Velocity decay factor (lower = more friction)
 } as const;
 
 export const SPEECH_CONFIG = {
