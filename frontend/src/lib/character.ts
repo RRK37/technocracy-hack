@@ -27,8 +27,10 @@ export class SimulationCharacter {
   // Position and movement
   x: number;
   y: number;
+  z: number;  // Z-axis position for 3D mode
   vx: number;
   vy: number;
+  vz: number; // Z-axis velocity for 3D mode
 
   // Animation
   frameIndex: number = 0;
@@ -110,8 +112,10 @@ export class SimulationCharacter {
     this.data = characterData;
     this.x = x;
     this.y = y;
+    this.z = Math.random() * WORLD_CONFIG.DEPTH; // Random z for 3D spread
     this.vx = vx;
     this.vy = vy;
+    this.vz = (Math.random() - 0.5) * CHARACTER_CONFIG.SPEED; // Random z velocity
 
     // Assign random aura (0-1)
     this.aura = Math.random();
@@ -665,6 +669,8 @@ export class SimulationCharacter {
       this.vx = Math.cos(angle) * CHARACTER_CONFIG.SPEED;
       this.vy = Math.sin(angle) * CHARACTER_CONFIG.SPEED;
     }
+    // Reset z velocity for 3D mode
+    this.vz = 0;
   }
 
   /**

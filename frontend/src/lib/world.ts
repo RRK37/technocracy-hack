@@ -5,6 +5,7 @@
 export const WORLD_CONFIG = {
   WIDTH: 3000,
   HEIGHT: 1500,
+  DEPTH: 1500,  // Z-axis bounds for 3D mode
   NUM_CHARACTERS: 21, // 8 VCs + Jordan (presenter) + 12 general participants
 } as const;
 
@@ -63,7 +64,7 @@ export const GRAVITY_CONFIG = {
   MAX_FORCE: 0.5,             // Maximum force to prevent extreme acceleration
   MIN_DISTANCE: 50,           // Minimum distance to prevent overlap
   EQUILIBRIUM_DISTANCE: 80,   // Agents stop accelerating at this distance
-  DAMPING: 0.99,              // Velocity decay factor (lower = more friction)
+  DAMPING: 0.98,              // Velocity decay factor (lower = more friction)
 } as const;
 
 export const SPEECH_CONFIG = {
@@ -103,7 +104,8 @@ export enum WorldMode {
   DISCUSS = 'discuss',          // Waiting room: audience in top-left, presenter on right
   PITCH = 'pitch',              // Combined Present + Discuss with stage transitions
   SCRATCH = 'scratch',          // Sandbox mode for experimenting with new features
-  ABSTRACT_LAYERS = 'abstract-layers', // Copy of scratch for new feature development
+  ABSTRACT_LAYERS = 'abstract-layers', // 2D abstract layer visualization
+  ABSTRACT_3D = 'abstract-3d',  // 3D abstract layer visualization with free-fly camera
 }
 
 // Pitch mode stages
@@ -194,6 +196,16 @@ export const MODE_CONFIG: Record<WorldMode, ModeFeatures> = {
     audienceFormation: false,
     conversing: true,       // Enable random conversations
     abstractLayer: true,    // Enable zoom-based abstract visualization
+  },
+  [WorldMode.ABSTRACT_3D]: {
+    // 3D Abstract mode - same as ABSTRACT_LAYERS but rendered in 3D with free-fly camera
+    trapCircles: false,
+    interactions: false,
+    interactionRadius: false,
+    sitting: false,
+    audienceFormation: false,
+    conversing: true,       // Enable random conversations
+    abstractLayer: true,    // Enable abstract visualization
   },
 };
 

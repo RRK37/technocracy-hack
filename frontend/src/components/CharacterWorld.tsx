@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { WorldCanvas } from './WorldCanvas';
+import { World3DCanvas } from './World3DCanvas';
 import { WorldControls, SidebarToggleButton } from './WorldControls';
 import { useCharacterData } from '@/src/hooks/useCharacterData';
 import { useCamera } from '@/src/hooks/useCamera';
@@ -135,6 +136,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       simulationCharacters.forEach((char) => {
         char.vx = 0;
         char.vy = 0;
+        char.vz = 0; // 3D mode
       });
     }
   }, [staticMode, simulationCharacters]);
@@ -668,6 +670,7 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
           simulationCharacters.forEach((char) => {
             char.x += char.vx;
             char.y += char.vy;
+            char.z += char.vz; // 3D mode z-axis
           });
         } else {
           // Normal mode: full movement and wandering
@@ -855,47 +858,52 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
             for (const char of simulationCharacters) {
               // Get all edges for this character
               const edges = interactionGraphRef.current.getEdgesForCharacter(char.id);
+              if (edges.length === 0) continue;
+
+              // Accumulate forces from all connections
+              let totalFx = 0, totalFy = 0, totalFz = 0;
 
               for (const edge of edges) {
                 // Find the partner character
                 const partner = simulationCharacters.find(c => c.id === edge.partnerId);
                 if (!partner) continue;
 
-                // Calculate direction to partner
+                // Calculate direction to partner (3D)
                 const dx = partner.x - char.x;
                 const dy = partner.y - char.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                const dz = partner.z - char.z;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-                // Skip if too close (prevent overlap)
+                // Skip if too close (prevent overlap) or at equilibrium
                 if (distance < GRAVITY_CONFIG.MIN_DISTANCE) continue;
+                if (distance < GRAVITY_CONFIG.EQUILIBRIUM_DISTANCE) continue; // Don't add force if already close
 
                 // Normalize direction
                 const nx = dx / distance;
                 const ny = dy / distance;
+                const nz = dz / distance;
 
-                // Distance-based behavior:
-                // - When far: accelerate toward partner
-                // - When within equilibrium: apply damping instead
-                if (distance > GRAVITY_CONFIG.EQUILIBRIUM_DISTANCE) {
-                  // Calculate force based on edge weight
-                  // Force = strength * weight, capped at max
-                  const force = Math.min(
-                    gravityStrength * edge.weight,
-                    GRAVITY_CONFIG.MAX_FORCE
-                  );
+                // Calculate force based on edge weight
+                const force = Math.min(
+                  gravityStrength * edge.weight,
+                  GRAVITY_CONFIG.MAX_FORCE
+                );
 
-                  // Apply force to velocity (accelerate toward partner)
-                  char.vx += nx * force * deltaTime;
-                  char.vy += ny * force * deltaTime;
-                } else {
-                  // Within equilibrium zone - apply damping to slow down
-                  // Stronger damping the closer they are
-                  const dampingFactor = GRAVITY_CONFIG.DAMPING -
-                    (1 - distance / GRAVITY_CONFIG.EQUILIBRIUM_DISTANCE) * 0.1;
-                  char.vx *= Math.max(dampingFactor, 0.8);
-                  char.vy *= Math.max(dampingFactor, 0.8);
-                }
+                // Accumulate forces (only from far partners)
+                totalFx += nx * force;
+                totalFy += ny * force;
+                totalFz += nz * force;
               }
+
+              // Apply accumulated forces
+              char.vx += totalFx * deltaTime;
+              char.vy += totalFy * deltaTime;
+              char.vz += totalFz * deltaTime;
+
+              // Apply light constant damping to prevent infinite acceleration
+              char.vx *= GRAVITY_CONFIG.DAMPING;
+              char.vy *= GRAVITY_CONFIG.DAMPING;
+              char.vz *= GRAVITY_CONFIG.DAMPING;
             }
           }
         }
@@ -967,31 +975,40 @@ export function CharacterWorld({ initialMode = WorldMode.INTERACTIVE, onBack, pi
       <SidebarInset className="overflow-hidden bg-gray-900 p-0 m-0">
         <div className="relative w-full h-full">
           <SidebarToggleButton />
-          <WorldCanvas
-            characters={simulationCharacters}
-            camera={camera}
-            onWheel={handleWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            isDragging={isDragging}
-            trapCircles={trapCircles}
-            onAddTrapCircle={addTrapCircle}
-            onRemoveTrapCircle={removeTrapCircle}
-            onEndInteraction={endCharacterInteraction}
-            showInteractionRadius={modeConfig.interactionRadius && showInteractionRadius}
-            showTrapCircles={modeConfig.trapCircles && showTrapCircles}
-            modeConfig={modeConfig}
-            speechBubble={currentSpeechChunk && presenterRef.current ? {
-              text: currentSpeechChunk,
-              x: presenterRef.current.x,
-              y: presenterRef.current.y,
-            } : undefined}
-            discussionBubbles={discussionBubbles}
-            interactionGraph={interactionGraphRef.current}
-            isPlaybackMode={isPlaybackMode}
-            playbackSnapshot={playbackSnapshot}
-          />
+          {worldMode === WorldMode.ABSTRACT_3D ? (
+            <World3DCanvas
+              characters={simulationCharacters}
+              interactionGraph={interactionGraphRef.current}
+              isPlaybackMode={isPlaybackMode}
+              playbackSnapshot={playbackSnapshot}
+            />
+          ) : (
+            <WorldCanvas
+              characters={simulationCharacters}
+              camera={camera}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              isDragging={isDragging}
+              trapCircles={trapCircles}
+              onAddTrapCircle={addTrapCircle}
+              onRemoveTrapCircle={removeTrapCircle}
+              onEndInteraction={endCharacterInteraction}
+              showInteractionRadius={modeConfig.interactionRadius && showInteractionRadius}
+              showTrapCircles={modeConfig.trapCircles && showTrapCircles}
+              modeConfig={modeConfig}
+              speechBubble={currentSpeechChunk && presenterRef.current ? {
+                text: currentSpeechChunk,
+                x: presenterRef.current.x,
+                y: presenterRef.current.y,
+              } : undefined}
+              discussionBubbles={discussionBubbles}
+              interactionGraph={interactionGraphRef.current}
+              isPlaybackMode={isPlaybackMode}
+              playbackSnapshot={playbackSnapshot}
+            />
+          )}
         </div>
       </SidebarInset>
       <WorldControls

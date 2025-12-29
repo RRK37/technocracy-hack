@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers, Magnet, History, Radio, Anchor } from 'lucide-react';
+import { PanelRightOpen, Users, Circle, Trash2, Eye, Zap, FlaskConical, Presentation, MessageCircle, Rocket, Play, SkipForward, ArrowLeft, Layers, Magnet, History, Radio, Anchor, Box } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -256,10 +256,19 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 className={`h-6 px-2 text-xs ${worldMode === WorldMode.ABSTRACT_LAYERS ? 'bg-pink-600 hover:bg-pink-700 text-white' : 'bg-transparent'}`}
               >
                 <Layers className="size-3 mr-1" />
-                Abstract Layers
+                Abstract 2D
               </Button>
-              {/* Gravity toggle - only show in Abstract Layers mode */}
-              {worldMode === WorldMode.ABSTRACT_LAYERS && onToggleGravity && (
+              <Button
+                variant={worldMode === WorldMode.ABSTRACT_3D ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSetWorldMode(WorldMode.ABSTRACT_3D)}
+                className={`h-6 px-2 text-xs ${worldMode === WorldMode.ABSTRACT_3D ? 'bg-violet-600 hover:bg-violet-700 text-white' : 'bg-transparent'}`}
+              >
+                <Box className="size-3 mr-1" />
+                Abstract 3D
+              </Button>
+              {/* Gravity toggle - show in both Abstract modes */}
+              {(worldMode === WorldMode.ABSTRACT_LAYERS || worldMode === WorldMode.ABSTRACT_3D) && onToggleGravity && (
                 <Button
                   variant={gravityEnabled ? "default" : "outline"}
                   size="sm"
@@ -271,7 +280,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
                 </Button>
               )}
               {/* Static mode toggle - agents start still, only move from gravity */}
-              {worldMode === WorldMode.ABSTRACT_LAYERS && onToggleStaticMode && (
+              {(worldMode === WorldMode.ABSTRACT_LAYERS || worldMode === WorldMode.ABSTRACT_3D) && onToggleStaticMode && (
                 <Button
                   variant={staticMode ? "default" : "outline"}
                   size="sm"
@@ -285,7 +294,7 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
             </div>
           </div>
           {/* Gravity strength slider - only show when gravity is enabled */}
-          {worldMode === WorldMode.ABSTRACT_LAYERS && gravityEnabled && onSetGravityStrength && (
+          {(worldMode === WorldMode.ABSTRACT_LAYERS || worldMode === WorldMode.ABSTRACT_3D) && gravityEnabled && onSetGravityStrength && (
             <div className="flex items-center gap-2 px-1">
               <span className="text-xs text-muted-foreground">Gravity:</span>
               <input
@@ -302,8 +311,8 @@ export function WorldControls({ onAsk, characters, onClearTrapCircles, trapCircl
               </span>
             </div>
           )}
-          {/* Time history playback controls - only show in Abstract Layers mode */}
-          {worldMode === WorldMode.ABSTRACT_LAYERS && onTogglePlayback && onSetPlaybackIndex && snapshotCount > 0 && (
+          {/* Time history playback controls - show in both Abstract modes */}
+          {(worldMode === WorldMode.ABSTRACT_LAYERS || worldMode === WorldMode.ABSTRACT_3D) && onTogglePlayback && onSetPlaybackIndex && snapshotCount > 0 && (
             <div className="flex flex-col gap-2 p-2 bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
